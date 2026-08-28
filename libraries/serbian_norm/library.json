@@ -1,0 +1,9 @@
+{
+  "id": "serbian_norm",
+  "name": "Serbian language — modern norm",
+  "status": "PROJECT",
+  "evidence_class": "NORM",
+  "purpose": "Modern Serbian orthography, morphology, syntax, government and other independently supported normative constraints.",
+  "hard_gate_eligible": true,
+  "notes": "No hard-gate rules are operational in the bootstrap. Public institutional material and supplied normative books must be studied and audited before promotion."
+}
