@@ -1,0 +1,9 @@
+{
+  "id": "interference_ru",
+  "name": "Russian to Serbian interference",
+  "status": "PROJECT",
+  "evidence_class": "INTERFERENCE",
+  "purpose": "Russian-derived valency, case government, word order, aspect, clitic placement, lexical and speech-formula transfer into Serbian.",
+  "hard_gate_eligible": false,
+  "notes": "Keep independent from English interference. Similar-looking Slavic structures need especially strong counterexamples and corpus validation."
+}
