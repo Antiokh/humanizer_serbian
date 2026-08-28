@@ -1,0 +1,15 @@
+{
+  "id": "ai_style",
+  "name": "Serbian formulaic and AI-style diagnostics",
+  "status": "SEED",
+  "evidence_class": "AI_STYLE_SIGNAL",
+  "purpose": "Accumulated document-level patterns that can make Serbian prose formulaic or machine-like.",
+  "hard_gate_eligible": false,
+  "operational_rules": [
+    "sr_ai_negative_parallelism_density",
+    "sr_ai_triplet_density",
+    "sr_ai_repeated_section_scaffold",
+    "sr_ai_heading_fragmentation"
+  ],
+  "notes": "Signals are diagnostics, never proof of AI authorship. Single ordinary constructions must remain clean."
+}

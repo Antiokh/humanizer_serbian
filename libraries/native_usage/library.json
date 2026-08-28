@@ -1,0 +1,9 @@
+{
+  "id": "native_usage",
+  "name": "Natural Serbian usage",
+  "status": "PROJECT",
+  "evidence_class": "NATIVE_USAGE",
+  "purpose": "Collocation, information structure, clitics, ellipsis, repetition, register and variant choice among normative Serbian forms.",
+  "hard_gate_eligible": false,
+  "notes": "Corpus frequency may support this library but cannot create normative errors."
+}

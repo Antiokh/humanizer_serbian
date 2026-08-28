@@ -1,0 +1,13 @@
+{
+  "id": "srwac",
+  "name": "srWaC 1.1 corpus evidence",
+  "status": "PROJECT",
+  "evidence_class": "NATIVE_USAGE",
+  "source_url": "https://www.clarin.si/repository/xmlui/handle/11356/1063",
+  "license": "CC BY-SA 4.0",
+  "purpose": "Calibrate phrase frequencies, collocations and false-positive rates for Serbian rules.",
+  "constraints": [
+    "Corpus frequency must not create NORM.",
+    "Provider becomes OPERATIONAL only after query/data contract and reproducible calibration are defined."
+  ]
+}

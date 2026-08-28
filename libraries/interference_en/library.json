@@ -1,0 +1,9 @@
+{
+  "id": "interference_en",
+  "name": "English to Serbian interference",
+  "status": "PROJECT",
+  "evidence_class": "INTERFERENCE",
+  "purpose": "English-derived semantic, syntactic, collocational and pragmatic transfer into Serbian.",
+  "hard_gate_eligible": false,
+  "notes": "Keep independent from Russian interference. Contextual candidates require Serbian corpus and source validation before deterministic promotion."
+}
