@@ -1,0 +1,9 @@
+{
+  "id": "editing",
+  "name": "Serbian editorial practice",
+  "status": "PROJECT",
+  "evidence_class": "EDITING",
+  "purpose": "Clarity, rhythm, structure, register and reader-task choices among Serbian forms already allowed by semantics and norm.",
+  "hard_gate_eligible": false,
+  "notes": "Editorial preferences must not be promoted into NORM solely because an author or school recommends them."
+}
