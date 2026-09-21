@@ -36,7 +36,7 @@ Rejected blanket rules:
 
 ## AI-style audit
 
-The strongest project-relevant correction is that structural regularity and formulaic repetition can be legitimate features of high-standardization genres. Existing AI diagnostics therefore remain soft signals and must be interpreted against genre.
+Structural regularity and formulaic repetition can be legitimate features of high-standardization genres. Existing AI diagnostics therefore remain soft signals. When the caller explicitly supplies `administrative`, `legal` or `documentation`, repeated-section-scaffold and dense-heading findings are now mechanically suppressed.
 
 ## Norm boundary
 
@@ -44,8 +44,11 @@ No modern Serbian grammatical/orthographic hard rule is derived from this book.
 
 ## Automation audit
 
-The useful phenomena all depend on functional purpose, genre, audience, channel, semantic structure or authorial intent. Surface regexes would systematically confuse legitimate stylistic specialization with error.
+Automatic register inference from surface features remains unsafe. Once a profile is supplied externally, however, two safe kinds of automation become possible:
 
-**Final automation decision: 0 mechanical checks.**
+1. **false-positive suppression** for structured genres;
+2. **cluster-based register mismatch** in explicitly `plain` / `conversational` text.
 
-Integration should change the contextual reasoning model and false-positive boundaries, not add detectors.
+A single administrative phrase never triggers the mismatch rule; at least three distinct markers are required.
+
+**Final automation decision: 1 EXTENDED_MECHANICAL finding + 2 DEFAULT_MECHANICAL suppressions; 0 hard gates.**
