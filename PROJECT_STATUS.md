@@ -22,9 +22,9 @@ The project is Serbian-only. The Russian humanizer is used as an architectural r
 
 - Serbian normative hard gates.
 - Corpus-backed native-usage rules.
-- English-to-Serbian interference library.
+- Broader corpus-calibrated English-to-Serbian interference library beyond the current seed heuristic.
 - Russian-to-Serbian interference library.
-- Deterministic register classifier / bureaucratic-register checker.
+- Automatic register classifier; current register-aware checks require an explicit profile.
 - srWaC calibration provider.
 - Model-based contextual review.
 
@@ -45,11 +45,12 @@ Results:
 - a general functional-style gate added: communicative function, genre, audience and channel now precede stylistic cleanup;
 - stylistic norm is explicitly separated from standard-language norm;
 - administrative/publicistic standardization and recurring templates are recorded as AI-style false-positive boundaries;
-- project-authored contextual evals and anti-rules added inside both study packages;
+- project-authored contextual evals and anti-rules added across all three study packages;
 - no source claim was promoted to modern Serbian `NORM`;
-- **0 new mechanical checks** were justified by these studies.
+- two narrow profile-gated `EXTENDED_MECHANICAL` checks were promoted after false-positive review: `sr_register_admin_formula_cluster` and `sr_en_stacked_mitigation`;
+- two mechanical safeguards suppress structural AI-style findings for explicit `administrative`, `legal` and `documentation` profiles.
 
-The next calibration need is corpus/dialogue evidence for pragmatic transfer and independent current normative evidence for any future hard rule.
+The next calibration need is corpus/dialogue evidence for broader pragmatic-transfer rules, calibration of administrative marker lists against modern Serbian text, and independent current normative evidence for any future hard rule.
 
 ## Current policy
 
