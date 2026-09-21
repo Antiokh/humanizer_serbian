@@ -1,0 +1,11 @@
+{
+  "source": "pavlovic-jovanovic-2026-pravni-jezik",
+  "mechanical_checks_promoted": 0,
+  "mappings": [
+    {"observation_ids":["PJ-O01","PJ-O02"],"eval_ids":["PJ-E01"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PJ-O03","PJ-O04","PJ-O05"],"eval_ids":["PJ-E02","PJ-E03"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PJ-O06","PJ-O07","PJ-O08"],"eval_ids":["PJ-E04","PJ-E05"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PJ-O09","PJ-O10"],"eval_ids":["PJ-E06"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PJ-O11"],"eval_ids":["PJ-E07"],"automation":"NONE"}
+  ]
+}
