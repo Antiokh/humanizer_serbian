@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Conservative Serbian humanizer seed checks.
+"""Conservative Serbian humanizer checks.
 
-These checks identify accumulated document-level style patterns. They do not attempt
-to prove AI authorship and do not classify ordinary Serbian constructions as errors.
+Mechanical findings are deliberately narrow. AI-style checks operate at document
+level; register/interference checks require an explicit profile and report soft
+review signals rather than language errors.
 """
 
 from __future__ import annotations
@@ -30,6 +31,21 @@ CYR_TO_LAT = str.maketrans(
     }
 )
 
+PROFILES = (
+    "auto",
+    "plain",
+    "conversational",
+    "publicistic",
+    "scientific",
+    "administrative",
+    "legal",
+    "documentation",
+    "creative",
+    "formal",
+)
+STRUCTURED_PROFILES = {"administrative", "legal", "documentation"}
+PLAIN_PROFILES = {"plain", "conversational"}
+
 HEADING_RE = re.compile(r"(?m)^\s{0,3}#{1,6}\s+(.+?)\s*$")
 NEGATIVE_PARALLELISM_RE = re.compile(
     r"\b(?:nije|nisu|nisam|nisi|nismo|niste|ne)\s+"
@@ -46,6 +62,30 @@ TRIPLET_RE = re.compile(
 )
 SENTENCE_RE = re.compile(r"[^.!?\n]+[.!?]?", re.MULTILINE)
 WORD_RE = re.compile(r"\b[\wčćžšđ]+\b", re.IGNORECASE)
+
+ADMIN_MARKERS = (
+    ("u skladu sa", re.compile(r"\bu\s+skladu\s+sa\b", re.IGNORECASE)),
+    ("ovim putem", re.compile(r"\bovim\s+putem\b", re.IGNORECASE)),
+    ("u cilju", re.compile(r"\bu\s+cilju\b", re.IGNORECASE)),
+    ("vršiti/vrši se", re.compile(r"\b(?:vršiti|vrši\s+se|vršimo|vršite|vršim)\b", re.IGNORECASE)),
+    ("izvršiti/izvršenje", re.compile(r"\bizvrš(?:iti|enje|avanja?|avanje)\b", re.IGNORECASE)),
+    ("dostavljanje", re.compile(r"\bdostavlj(?:anje|anja|anjem|ati|amo|ate)\b", re.IGNORECASE)),
+    ("realizacija", re.compile(r"\brealizacij\w*\b", re.IGNORECASE)),
+    ("sprovođenje", re.compile(r"\bsprovođenj\w*\b", re.IGNORECASE)),
+    ("implementacija", re.compile(r"\bimplementacij\w*\b", re.IGNORECASE)),
+    ("predmetni/navedeni", re.compile(r"\b(?:predmetn|naveden)\w*\b", re.IGNORECASE)),
+)
+
+MITIGATION_MARKERS = (
+    ("možda", re.compile(r"\bmožda\b", re.IGNORECASE)),
+    ("čini mi se", re.compile(r"\bčini\s+mi\s+se\b", re.IGNORECASE)),
+    ("pitao/la sam se", re.compile(r"\bpita(?:o|la)\s+sam\s+se\b", re.IGNORECASE)),
+    ("da li biste/bismo", re.compile(r"\bda\s+li\s+bi(?:ste|smo)\b", re.IGNORECASE)),
+    ("biste/bismo mogli", re.compile(r"\bbi(?:ste|smo)\s+mogli\b", re.IGNORECASE)),
+    ("bili voljni", re.compile(r"\bbili\s+voljni\b", re.IGNORECASE)),
+    ("razmotriti mogućnost", re.compile(r"\brazmotr\w*\s+mogućnost\b", re.IGNORECASE)),
+    ("mogućnost da", re.compile(r"\bmogućnost\s+da\b", re.IGNORECASE)),
+)
 
 
 @dataclass(frozen=True)
@@ -115,7 +155,9 @@ def triplet_density(text: str) -> Finding | None:
     )
 
 
-def repeated_section_scaffold(text: str) -> Finding | None:
+def repeated_section_scaffold(text: str, profile: str = "auto") -> Finding | None:
+    if profile in STRUCTURED_PROFILES:
+        return None
     headings = [_compact_ws(h) for h in HEADING_RE.findall(text)]
     if len(headings) < 6:
         return None
@@ -140,7 +182,9 @@ def repeated_section_scaffold(text: str) -> Finding | None:
     )
 
 
-def heading_fragmentation(text: str) -> Finding | None:
+def heading_fragmentation(text: str, profile: str = "auto") -> Finding | None:
+    if profile in STRUCTURED_PROFILES:
+        return None
     headings = HEADING_RE.findall(text)
     words = _words(normalize_script(text))
     if len(headings) < 6 or not words:
@@ -154,31 +198,94 @@ def heading_fragmentation(text: str) -> Finding | None:
         severity="soft",
         message=(
             "Naslovi su veoma gusti u odnosu na količinu proze. "
-            "To je legitimno u dokumentaciji i beleškama, ali u kontinuiranom tekstu može delovati šablonski."
+            "To je legitimno u dokumentaciji, obrascima i beleškama; u kontinuiranom tekstu može delovati šablonski."
         ),
         count=len(headings),
         evidence=[_compact_ws(h) for h in headings[:5]],
     )
 
 
-def review(text: str) -> list[Finding]:
-    checks = (
-        negative_parallelism_density,
-        triplet_density,
-        repeated_section_scaffold,
-        heading_fragmentation,
+def administrative_formula_cluster(text: str, profile: str = "auto") -> Finding | None:
+    """Flag accumulated administrative formulae only in explicitly plain/conversational text."""
+    if profile not in PLAIN_PROFILES:
+        return None
+    normalized = normalize_script(text)
+    hits: list[tuple[str, str]] = []
+    for label, pattern in ADMIN_MARKERS:
+        match = pattern.search(normalized)
+        if match:
+            hits.append((label, _compact_ws(match.group(0))))
+    if len(hits) < 3:
+        return None
+    return Finding(
+        rule_id="sr_register_admin_formula_cluster",
+        category="EDITING",
+        severity="soft",
+        message=(
+            "U neformalnom ili običnom tekstu nagomilani su administrativni obrasci. "
+            "Pojedinačni izraz može biti sasvim opravdan; nalaz nastaje tek iz kombinacije više markera."
+        ),
+        count=len(hits),
+        evidence=[f"{label}: {surface}" for label, surface in hits[:6]],
     )
-    return [finding for check in checks if (finding := check(text)) is not None]
+
+
+def stacked_mitigation(text: str, profile: str = "auto") -> Finding | None:
+    """Detect unusually stacked mitigation only in explicitly plain/conversational profiles."""
+    if profile not in PLAIN_PROFILES:
+        return None
+    normalized = normalize_script(text)
+    evidence: list[str] = []
+    max_count = 0
+    for sentence in _sentences(normalized):
+        sentence_hits = []
+        for label, pattern in MITIGATION_MARKERS:
+            if pattern.search(sentence):
+                sentence_hits.append(label)
+        if len(sentence_hits) > max_count:
+            max_count = len(sentence_hits)
+            evidence = sentence_hits
+    if max_count < 3:
+        return None
+    return Finding(
+        rule_id="sr_en_stacked_mitigation",
+        category="INTERFERENCE",
+        severity="soft",
+        message=(
+            "U jednoj rečenici je naslagano više sredstava za ublažavanje/indirektnost. "
+            "U običnom ili razgovornom profilu proveri da li je formulacija preneta iz engleskog obrasca; "
+            "u formalnom ili visokorizičnom kontekstu ista strategija može biti opravdana."
+        ),
+        count=max_count,
+        evidence=evidence[:6],
+    )
+
+
+def review(text: str, profile: str = "auto") -> list[Finding]:
+    findings: list[Finding] = []
+    for check in (negative_parallelism_density, triplet_density):
+        if finding := check(text):
+            findings.append(finding)
+    for check in (repeated_section_scaffold, heading_fragmentation, administrative_formula_cluster, stacked_mitigation):
+        if finding := check(text, profile):
+            findings.append(finding)
+    return findings
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Conservative Serbian humanizer checks")
     parser.add_argument("path", nargs="?", help="UTF-8 text/Markdown file; stdin if omitted")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--profile",
+        choices=PROFILES,
+        default="auto",
+        help="Functional profile. Register/interference heuristics require an explicit profile.",
+    )
     args = parser.parse_args(argv)
 
     text = Path(args.path).read_text(encoding="utf-8") if args.path else sys.stdin.read()
-    findings = review(text)
+    findings = review(text, profile=args.profile)
 
     if args.json:
         print(json.dumps([asdict(f) for f in findings], ensure_ascii=False, indent=2))
