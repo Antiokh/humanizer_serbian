@@ -74,6 +74,15 @@ These sources were supplied as complete PDFs and processed through the full `stu
 - Scope limit: review article with historical material and many secondary claims; no independent `NORM` promotion.
 - Integration result: model guidance and evals; **0 mechanical checks**.
 
+### Branko Tošović — *Funkcionalni stilovi* (2002)
+
+- Beogradska knjiga / NM libris; printed-edition ISBN 86-7590-021-X; COBISS-ID 100960524.
+- Full study: `studies/tosovic-2002-funkcionalni-stilovi/`.
+- Primary class: `EDITING` / functional-style modeling, with `NATIVE_USAGE` and `AI_STYLE_SIGNAL` counterexample implications.
+- Main use: style as selection+organization, separation of stylistic norm from language norm, functional-style hierarchy, sender/receiver/channel modeling, economy vs redundancy, and profiles for literary, publicistic, scientific, administrative and conversational styles.
+- Scope limit: 2002 source with broad South-Slavic/former-Yugoslav and cross-linguistic evidence; exact historical/frequency claims are not current Serbian norm.
+- Integration result: general functional-style gate, genre-aware AI-style counterexamples and contextual evals; **0 mechanical checks**.
+
 ## Public analyses of AI-generated Serbian
 
 ### Bojan Viculin — “Razotkrivanje šablona AI (VI) generisanog teksta”, P.U.L.S.E, 25 Apr 2026
