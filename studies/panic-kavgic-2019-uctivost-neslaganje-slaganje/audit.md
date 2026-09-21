@@ -28,8 +28,8 @@ No source observation is promoted to modern Serbian `NORM`.
 
 ## Automation audit
 
-Every high-value phenomenon requires semantic, relationship or discourse context. Regex/count-based implementation would create obvious false positives.
+Generic directness or hedge detection remains unsafe. One narrower pattern is mechanically useful after adding an explicit functional profile: a single sentence containing at least three **distinct** mitigation/indirectness markers in `plain` or `conversational` text. The same text stays clean in `auto` and `formal`.
 
-**Final automation decision: 0 mechanical checks.**
+This is an `INTERFERENCE` review signal, not a language error and not evidence of AI authorship.
 
-Integration is limited to model guidance, provenance and contextual evals.
+**Final automation decision: 1 EXTENDED_MECHANICAL check — `sr_en_stacked_mitigation`; 0 hard gates.**
