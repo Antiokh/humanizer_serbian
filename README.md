@@ -25,6 +25,7 @@ Choice among valid Serbian alternatives:
 - Keep English-to-Serbian and Russian-to-Serbian interference as independent libraries.
 - Treat AI-looking patterns as accumulated document-level signals, never proof of authorship.
 - Do not create blacklists of punctuation, common Serbian words or normal rhetorical constructions.
+- Treat functional profile as an input/context signal rather than pretending that register can be inferred safely from a few surface markers.
 
 ## Repository structure
 
@@ -36,20 +37,31 @@ Choice among valid Serbian alternatives:
 - `tests/` — deterministic regression tests and false-positive guards.
 - `docs/` — architecture, public sources, hypotheses and project status.
 
-## Current seed
+## Current executable pass
 
-The initial executable pass contains conservative document-level diagnostics for:
+Document-level `AI_STYLE_SIGNAL` diagnostics:
 
 - repeated `nije … već/nego …` contrast scaffolds;
 - repeated three-member enumerations;
 - repeated section-heading scaffolds;
 - excessive micro-heading fragmentation.
 
-These are `AI_STYLE_SIGNAL` findings, not `NORM` findings. A single occurrence is intentionally ignored.
+Profile-gated `EXTENDED_MECHANICAL` diagnostics:
+
+- `sr_register_admin_formula_cluster` — accumulated administrative formulae in explicitly `plain` / `conversational` text;
+- `sr_en_stacked_mitigation` — at least three distinct mitigation/indirectness markers in one sentence in explicitly `plain` / `conversational` text.
+
+Mechanical false-positive guards:
+
+- `administrative`, `legal` and `documentation` profiles suppress repeated-section-scaffold and dense-heading AI signals because structural regularity can be genre-functional.
+
+Register/interference heuristics do **not** run in `auto`; the caller must explicitly supply a profile. All findings are soft diagnostics, not `NORM` findings.
 
 ```bash
 python3 scripts/check.py text.md
 python3 scripts/check.py --json text.md
+python3 scripts/check.py --profile conversational text.md
+python3 scripts/check.py --profile administrative text.md
 python3 -m unittest discover -s tests
 ```
 
