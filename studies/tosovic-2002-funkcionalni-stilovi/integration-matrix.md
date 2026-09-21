@@ -11,18 +11,18 @@
 | publicistic information/persuasion | `editing` | register guidance | MODEL_ONLY | genre-dependent |
 | scientific abstraction/complex syntax | `editing` | register guidance | MODEL_ONLY | semantic/logical dependency required |
 | administrative standardization | `editing` | register guidance + anti-rule | MODEL_ONLY | forms/templates can be functional |
+| administrative formula cluster in explicit plain/conversational profile | `editing` | `sr_register_admin_formula_cluster` | EXTENDED_MECHANICAL | profile converts surface cluster into a narrow register-mismatch signal |
 | conversational ellipsis/fragments | `native_usage` + `editing` | preserve-function guidance | MODEL_ONLY | context-dependent |
 | literary markedness | `editing` | creative-writing restraint | MODEL_ONLY | aesthetic intent required |
-| template/cliché AI false positives | `ai_style` docs | counterexample boundary | MODEL_ONLY | genre detection not deterministic |
+| template/cliché AI false positives | `ai_style` runtime | suppress scaffold/heading signals for administrative/legal/documentation profiles | DEFAULT_MECHANICAL safeguard | structured genres are explicit counterexamples |
 | exact 2002 frequencies/prescriptions | provenance only | no promotion | NONE | source-period / cross-language |
-| register classifier regex | none | reject | NONE | surface form insufficient |
+| automatic register classifier | none | reject | NONE | surface form insufficient to infer profile safely |
 | sentence-length thresholds | none | reject | NONE | false positives across science/legal/publicistic |
 
 ## Runtime decision
 
-- New deterministic checks: **0**
-- New hard gates: **0**
-- New model-level functional-style gate: **yes**
-- AI-style false-positive boundary: **yes**
-- Source-study evals: **yes**
-- Current-NORM promotion: **none**
+- New finding check: **1 profile-gated EXTENDED_MECHANICAL register-mismatch heuristic**.
+- New mechanical false-positive safeguards: **2 profile suppressions** for structural AI checks.
+- New hard gates: **0**.
+- New model-level functional-style gate: **yes**.
+- Current-NORM promotion: **none**.
