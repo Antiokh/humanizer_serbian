@@ -28,8 +28,8 @@ No modern normative constraint is derived from this article alone.
 
 ## Automation audit
 
-Surface checks for `-nje`, passive morphology, sentence length, repeated nouns or legal connectives would all flag legitimate legal text at unacceptable rates.
+Surface checks for `-nje`, passive morphology, sentence length, repeated nouns or legal connectives remain rejected.
 
-**Final automation decision: 0 mechanical checks.**
+A narrower combined-source heuristic is acceptable only when the caller **already states** that the target is `plain` or `conversational`: three or more distinct administrative formula markers can then flag a probable register mismatch. The same language is suppressed in administrative/legal profiles.
 
-Integration is limited to model guidance, anti-rules, provenance and contextual evals.
+**Final automation decision: support `sr_register_admin_formula_cluster` as EXTENDED_MECHANICAL under explicit non-admin profiles; 0 hard gates.**
