@@ -1,11 +1,13 @@
 import unittest
 
 from scripts.check import (
+    administrative_formula_cluster,
     heading_fragmentation,
     negative_parallelism_density,
     normalize_script,
     repeated_section_scaffold,
     review,
+    stacked_mitigation,
     triplet_density,
 )
 
@@ -85,6 +87,30 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         self.assertIsNotNone(finding)
         self.assertEqual(finding.rule_id, "sr_ai_repeated_section_scaffold")
 
+    def test_structured_profile_suppresses_repeated_headings(self):
+        text = """## Podaci
+A.
+
+## Prilozi
+B.
+
+## Podaci
+C.
+
+## Prilozi
+D.
+
+## Podaci
+E.
+
+## Prilozi
+F.
+"""
+        self.assertIsNone(repeated_section_scaffold(text, profile="administrative"))
+        self.assertFalse(
+            any(f.rule_id == "sr_ai_repeated_section_scaffold" for f in review(text, profile="administrative"))
+        )
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
@@ -106,6 +132,63 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         finding = heading_fragmentation(text)
         self.assertIsNotNone(finding)
         self.assertEqual(finding.rule_id, "sr_ai_heading_fragmentation")
+
+    def test_documentation_profile_suppresses_dense_headings(self):
+        text = "\n\n".join(
+            [
+                "## Prvo\nKratko.",
+                "## Drugo\nKratko.",
+                "## Treće\nKratko.",
+                "## Četvrto\nKratko.",
+                "## Peto\nKratko.",
+                "## Šesto\nKratko.",
+            ]
+        )
+        self.assertIsNone(heading_fragmentation(text, profile="documentation"))
+
+    def test_admin_cluster_is_flagged_only_in_plain_profile(self):
+        text = (
+            "U skladu sa prethodno navedenim, ovim putem vršim dostavljanje fotografija "
+            "u cilju realizacije dogovorenog."
+        )
+        finding = administrative_formula_cluster(text, profile="plain")
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding.rule_id, "sr_register_admin_formula_cluster")
+        self.assertIsNone(administrative_formula_cluster(text, profile="administrative"))
+        self.assertIsNone(administrative_formula_cluster(text, profile="auto"))
+
+    def test_single_admin_formula_is_not_flagged(self):
+        self.assertIsNone(
+            administrative_formula_cluster("U skladu sa dogovorom, šaljem dokument.", profile="plain")
+        )
+
+    def test_cyrillic_admin_cluster_is_detected(self):
+        text = (
+            "У складу са претходно наведеним, овим путем вршим достављање фотографија "
+            "у циљу реализације договореног."
+        )
+        self.assertIsNotNone(administrative_formula_cluster(text, profile="conversational"))
+
+    def test_stacked_mitigation_is_flagged_in_plain_profile(self):
+        text = (
+            "Pitao sam se da li biste možda bili voljni da razmotrite mogućnost "
+            "da pomerimo sastanak."
+        )
+        finding = stacked_mitigation(text, profile="plain")
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding.rule_id, "sr_en_stacked_mitigation")
+
+    def test_stacked_mitigation_is_not_flagged_without_profile(self):
+        text = (
+            "Pitao sam se da li biste možda bili voljni da razmotrite mogućnost "
+            "da pomerimo sastanak."
+        )
+        self.assertIsNone(stacked_mitigation(text))
+        self.assertIsNone(stacked_mitigation(text, profile="formal"))
+
+    def test_one_or_two_mitigators_are_not_flagged(self):
+        self.assertIsNone(stacked_mitigation("Možda bismo mogli sutra.", profile="conversational"))
+        self.assertIsNone(stacked_mitigation("Čini mi se da ovo nije najbolje.", profile="plain"))
 
 
 if __name__ == "__main__":
