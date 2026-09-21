@@ -1,0 +1,12 @@
+{
+  "source": "panic-kavgic-2019-uctivost-neslaganje-slaganje",
+  "mechanical_checks_promoted": 1,
+  "mappings": [
+    {"observation_ids":["PK-O02","PK-O03","PK-O04"],"eval_ids":["PK-E01","PK-E02"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PK-O05","PK-O06","PK-O11","PK-O13"],"eval_ids":["PK-E03","PK-E04"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PK-O07","PK-O08"],"eval_ids":["PK-E05"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PK-O09","PK-O10","PK-O12"],"eval_ids":["PK-E06","PK-E07"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["PK-O09","PK-O12"],"eval_ids":["PK-E06","PK-E09"],"automation":"EXTENDED_MECHANICAL","rule_id":"sr_en_stacked_mitigation","boundary":"explicit plain/conversational profile only; formal/auto are negative cases"},
+    {"observation_ids":["PK-O15","PK-O16"],"eval_ids":["PK-E08"],"automation":"NONE"}
+  ]
+}

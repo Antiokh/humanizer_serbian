@@ -1,9 +1,12 @@
 {
   "id": "interference_en",
   "name": "English to Serbian interference",
-  "status": "PROJECT",
+  "status": "SEED",
   "evidence_class": "INTERFERENCE",
   "purpose": "English-derived semantic, syntactic, collocational and pragmatic transfer into Serbian.",
   "hard_gate_eligible": false,
-  "notes": "Keep independent from Russian interference. Contextual candidates require Serbian corpus and source validation before deterministic promotion."
+  "operational_rules": [
+    "sr_en_stacked_mitigation"
+  ],
+  "notes": "Keep independent from Russian interference. The operational mitigation heuristic is EXTENDED_MECHANICAL: it requires an explicit plain/conversational profile and at least three distinct mitigation markers in one sentence. It is suppressed in auto/formal and other profiles."
 }

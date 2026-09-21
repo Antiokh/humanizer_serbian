@@ -23,6 +23,8 @@ Natural Serbian usage, information structure, collocation, register, ellipsis, r
 ### `libraries/editing`
 Serbian editorial principles that operate among already valid alternatives.
 
+Functional-style profiling belongs here. Before evaluating surface style, determine communicative function, genre, audience and channel. The model may use broad literary-artistic, publicistic, scientific, administrative and conversational profiles, while allowing interstyles, substyles, genres and productive section-level switching. Stylistic norm is contextual and must not be silently upgraded into standard-language `NORM`.
+
 ### `libraries/interference_en`
 English-to-Serbian transfer and calques.
 
@@ -30,7 +32,7 @@ English-to-Serbian transfer and calques.
 Russian-to-Serbian transfer and calques. Kept separate because the mechanisms and false positives differ from English interference.
 
 ### `libraries/ai_style`
-Accumulated document-level diagnostics associated with formulaic LLM prose. Never proof of authorship.
+Accumulated document-level diagnostics associated with formulaic LLM prose. Never proof of authorship. Genre is a required false-positive boundary: administrative standardization, recurring forms, documentation scaffolds and other functionally regular structures can resemble AI-style repetition without being stylistic defects.
 
 ### `evidence/`
 External corpus/data providers. Evidence providers do not become reviewer voices.

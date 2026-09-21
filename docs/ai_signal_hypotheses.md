@@ -22,11 +22,13 @@ Counterexample requirement: ordinary rhetorical triplets and factual lists are v
 
 Identical section labels, paragraph openings or internal mini-templates repeated across many sections are a stronger signal than individual “AI words”. Measure repetition/entropy rather than blacklist vocabulary.
 
+Counterexample requirement: functional stylistics explicitly treats standardization, unification and recurring formulas as legitimate mechanisms in administrative documents and, to a lesser degree, some publicistic genres. A repeated scaffold must therefore be interpreted against genre before it becomes an AI-style finding. Source boundary: Tošović 2002, processed in `studies/tosovic-2002-funkcionalni-stilovi/`.
+
 ## H4 — micro-heading density
 
 Headings every few lines can make continuous generated prose mechanically partitioned.
 
-Counterexample requirement: documentation, FAQs, API docs and slide-like notes legitimately use dense headings.
+Counterexample requirement: documentation, FAQs, API docs, administrative forms, standardized documents and slide-like notes legitimately use dense headings or repeated structural labels.
 
 ## H5 — generic metaphor chains
 

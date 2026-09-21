@@ -52,6 +52,37 @@ This document tracks public sources usable for the Serbian humanizer. Source aut
 - Author/institution page: https://www.ff.uns.ac.rs/sr-lat/fakultet/odseci/anglistika/zaposleni/tvrtko-prcic
 - Candidate source for contact and contrastive mechanisms; process through `studies/` before library integration.
 
+## Reviewed supplied studies
+
+These sources were supplied as complete PDFs and processed through the full `studies/` protocol. They are research evidence, not redistributable repository content.
+
+### Olga Panić Kavgić — *Učtivost pri neslaganju i slaganju u engleskom i srpskom jeziku* (2019)
+
+- Filozofski fakultet, Novi Sad; E-disertacija 18; ISBN 978-86-6065-535-8.
+- Full study: `studies/panic-kavgic-2019-uctivost-neslaganje-slaganje/`.
+- Primary classes: `NATIVE_USAGE`, `INTERFERENCE`, `EDITING`.
+- Main use: context-sensitive directness/mitigation, interactional markers, familiarity/power, and English→Serbian pragmatic transfer in film dialogue/subtitles.
+- Scope limit: qualitative film-dialogue corpus; no population-wide generalization and no `NORM` promotion.
+- Integration result: model guidance and evals; **0 mechanical checks**.
+
+### Jelena M. Pavlović Jovanović — “Između prava i lingvistike – osobenosti pravnog jezika” (2026)
+
+- *Baština*, sv. 68; DOI 10.5937/bastina36-60685.
+- Full study: `studies/pavlovic-jovanovic-2026-pravni-jezik/`.
+- Primary class: `EDITING` / register modeling.
+- Main use: legal-register boundaries around precision/indeterminacy, positive/negative redundancy, nominalization, passive/impersonal constructions, stable terminology and intertextuality.
+- Scope limit: review article with historical material and many secondary claims; no independent `NORM` promotion.
+- Integration result: model guidance and evals; **0 mechanical checks**.
+
+### Branko Tošović — *Funkcionalni stilovi* (2002)
+
+- Beogradska knjiga / NM libris; printed-edition ISBN 86-7590-021-X; COBISS-ID 100960524.
+- Full study: `studies/tosovic-2002-funkcionalni-stilovi/`.
+- Primary class: `EDITING` / functional-style modeling, with `NATIVE_USAGE` and `AI_STYLE_SIGNAL` counterexample implications.
+- Main use: style as selection+organization, separation of stylistic norm from language norm, functional-style hierarchy, sender/receiver/channel modeling, economy vs redundancy, and profiles for literary, publicistic, scientific, administrative and conversational styles.
+- Scope limit: 2002 source with broad South-Slavic/former-Yugoslav and cross-linguistic evidence; exact historical/frequency claims are not current Serbian norm.
+- Integration result: general functional-style gate, genre-aware AI-style counterexamples and contextual evals; **0 mechanical checks**.
+
 ## Public analyses of AI-generated Serbian
 
 ### Bojan Viculin — “Razotkrivanje šablona AI (VI) generisanog teksta”, P.U.L.S.E, 25 Apr 2026
