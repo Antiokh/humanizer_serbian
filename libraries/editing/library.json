@@ -1,9 +1,12 @@
 {
   "id": "editing",
   "name": "Serbian editorial practice",
-  "status": "PROJECT",
+  "status": "SEED",
   "evidence_class": "EDITING",
   "purpose": "Clarity, rhythm, structure, register and reader-task choices among Serbian forms already allowed by semantics and norm.",
   "hard_gate_eligible": false,
-  "notes": "Editorial preferences must not be promoted into NORM solely because an author or school recommends them."
+  "operational_rules": [
+    "sr_register_admin_formula_cluster"
+  ],
+  "notes": "Editorial preferences must not be promoted into NORM solely because an author or school recommends them. The operational register heuristic is EXTENDED_MECHANICAL and runs only for explicitly plain/conversational profiles; auto and administrative/legal/documentation profiles remain clean."
 }
