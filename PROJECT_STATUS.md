@@ -24,7 +24,7 @@ The project is Serbian-only. The Russian humanizer is used as an architectural r
 - Corpus-backed native-usage rules.
 - English-to-Serbian interference library.
 - Russian-to-Serbian interference library.
-- Bureaucratic-register model.
+- Deterministic register classifier / bureaucratic-register checker.
 - srWaC calibration provider.
 - Model-based contextual review.
 
@@ -35,12 +35,16 @@ These remain `PROJECT` work until their sources, contracts, examples and false-p
 Completed the repository's full source-study protocol for:
 
 - Olga Panić Kavgić (2019), pragmatic agreement/disagreement and English→Serbian subtitle transfer;
-- Jelena M. Pavlović Jovanović (2026), Serbian legal-language functional style.
+- Jelena M. Pavlović Jovanović (2026), Serbian legal-language functional style;
+- Branko Tošović (2002), general functional-style theory covering literary, publicistic, scientific, administrative and conversational styles.
 
 Results:
 
 - source-backed model guidance added for Serbian directness/mitigation, discourse markers and English pragmatic interference;
 - legal-register boundaries added for nominalization, passive/impersonal forms, repetition, controlled generality, terminology and cross-references;
+- a general functional-style gate added: communicative function, genre, audience and channel now precede stylistic cleanup;
+- stylistic norm is explicitly separated from standard-language norm;
+- administrative/publicistic standardization and recurring templates are recorded as AI-style false-positive boundaries;
 - project-authored contextual evals and anti-rules added inside both study packages;
 - no source claim was promoted to modern Serbian `NORM`;
 - **0 new mechanical checks** were justified by these studies.
