@@ -30,6 +30,23 @@ The project is Serbian-only. The Russian humanizer is used as an architectural r
 
 These remain `PROJECT` work until their sources, contracts, examples and false-positive behavior are validated.
 
+## 21 September 2026 — first full source studies
+
+Completed the repository's full source-study protocol for:
+
+- Olga Panić Kavgić (2019), pragmatic agreement/disagreement and English→Serbian subtitle transfer;
+- Jelena M. Pavlović Jovanović (2026), Serbian legal-language functional style.
+
+Results:
+
+- source-backed model guidance added for Serbian directness/mitigation, discourse markers and English pragmatic interference;
+- legal-register boundaries added for nominalization, passive/impersonal forms, repetition, controlled generality, terminology and cross-references;
+- project-authored contextual evals and anti-rules added inside both study packages;
+- no source claim was promoted to modern Serbian `NORM`;
+- **0 new mechanical checks** were justified by these studies.
+
+The next calibration need is corpus/dialogue evidence for pragmatic transfer and independent current normative evidence for any future hard rule.
+
 ## Current policy
 
 Hard constraints:
