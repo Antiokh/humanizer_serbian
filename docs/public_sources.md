@@ -52,6 +52,28 @@ This document tracks public sources usable for the Serbian humanizer. Source aut
 - Author/institution page: https://www.ff.uns.ac.rs/sr-lat/fakultet/odseci/anglistika/zaposleni/tvrtko-prcic
 - Candidate source for contact and contrastive mechanisms; process through `studies/` before library integration.
 
+## Reviewed supplied studies
+
+These sources were supplied as complete PDFs and processed through the full `studies/` protocol. They are research evidence, not redistributable repository content.
+
+### Olga Panić Kavgić — *Učtivost pri neslaganju i slaganju u engleskom i srpskom jeziku* (2019)
+
+- Filozofski fakultet, Novi Sad; E-disertacija 18; ISBN 978-86-6065-535-8.
+- Full study: `studies/panic-kavgic-2019-uctivost-neslaganje-slaganje/`.
+- Primary classes: `NATIVE_USAGE`, `INTERFERENCE`, `EDITING`.
+- Main use: context-sensitive directness/mitigation, interactional markers, familiarity/power, and English→Serbian pragmatic transfer in film dialogue/subtitles.
+- Scope limit: qualitative film-dialogue corpus; no population-wide generalization and no `NORM` promotion.
+- Integration result: model guidance and evals; **0 mechanical checks**.
+
+### Jelena M. Pavlović Jovanović — “Između prava i lingvistike – osobenosti pravnog jezika” (2026)
+
+- *Baština*, sv. 68; DOI 10.5937/bastina36-60685.
+- Full study: `studies/pavlovic-jovanovic-2026-pravni-jezik/`.
+- Primary class: `EDITING` / register modeling.
+- Main use: legal-register boundaries around precision/indeterminacy, positive/negative redundancy, nominalization, passive/impersonal constructions, stable terminology and intertextuality.
+- Scope limit: review article with historical material and many secondary claims; no independent `NORM` promotion.
+- Integration result: model guidance and evals; **0 mechanical checks**.
+
 ## Public analyses of AI-generated Serbian
 
 ### Bojan Viculin — “Razotkrivanje šablona AI (VI) generisanog teksta”, P.U.L.S.E, 25 Apr 2026
