@@ -1,0 +1,15 @@
+{
+  "source": "tosovic-2002-funkcionalni-stilovi",
+  "mechanical_checks_promoted": 0,
+  "mappings": [
+    {"observation_ids":["TO-O01","TO-O02","TO-O03","TO-O24"],"eval_ids":["TO-E01","TO-E02"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O04","TO-O05","TO-O06"],"eval_ids":["TO-E03"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O07","TO-O08","TO-O20"],"eval_ids":["TO-E04","TO-E05"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O09","TO-O14","TO-O15","TO-O21"],"eval_ids":["TO-E06","TO-E07","TO-E08"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O10","TO-O11","TO-O22"],"eval_ids":["TO-E09","TO-E10"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O12","TO-O13"],"eval_ids":["TO-E11"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O16","TO-O17","TO-O18"],"eval_ids":["TO-E12","TO-E13"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O19"],"eval_ids":["TO-E14"],"automation":"MODEL_ONLY"},
+    {"observation_ids":["TO-O23"],"eval_ids":["TO-E15"],"automation":"NONE"}
+  ]
+}
