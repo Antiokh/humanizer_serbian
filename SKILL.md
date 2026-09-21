@@ -77,7 +77,25 @@ Never flag any of the following by itself:
 - Ekavian;
 - Ijekavian.
 
-Do not create Serbian equivalents of English “AI word lists” without Serbian evidence.
+Do not create Serbian equivalents of English “AI word lists” without Serbian evidence. Structural regularity, recurring headings, formulas and clichés must also be interpreted against genre: administrative forms, standardized documents, documentation and some publicistic formats can be highly regular for functional reasons.
+
+## Functional-style gate
+
+Before stylistic rewriting, infer the text's primary communicative function, genre, audience and channel. Treat functional-style classification as contextual, not as a hard label: a document may contain productive switches, interstyles, substyles or section-level register changes.
+
+Use these broad profiles only as orientation:
+
+- **literary-artistic** — aesthetic/expressive organization, markedness and authorial freedom;
+- **publicistic** — broad-audience information, explanation and/or persuasion;
+- **scientific** — abstraction, precision, terminology and explicit logical relations;
+- **administrative** — standardization, unification, procedural reliability and recurring forms;
+- **conversational** — situational economy, ellipsis, fragments, particles, repetition and interactional dependence.
+
+Stylistic norm is not the same as standard-language norm. A register mismatch can justify an edit, but it must not be promoted into a grammatical or orthographic error.
+
+Balance **economy** against **redundancy** according to function: shortening can improve transmission cost, while repetition can improve decoding reliability, reference stability or orientation.
+
+Do not assume that spoken = conversational or written = formal. Channel and functional style are separate dimensions.
 
 ## Bureaucratic and legal register
 
@@ -94,8 +112,9 @@ Legal Serbian is a stricter boundary case: nominalization, passive/impersonal fo
 5. Keep distinctive authorial rhythm, particles, fragments, repetitions and colloquial choices when they fit the register.
 6. Preserve functional interactional material such as `pa`, `mislim`, `znaš`, vocatives, hedges and purposeful repetition when removing it would change force, familiarity or formality.
 7. Prefer contextually natural Serbian directness over imported indirectness when the evidence supports it, but never force directness as a blanket Serbian style.
-8. Never manufacture slang, mistakes or punctuation quirks to simulate a human author.
+8. Preserve productive register switching when a text intentionally moves between technical, publicistic, conversational or other functional modes for audience reasons.
+9. Never manufacture slang, mistakes or punctuation quirks to simulate a human author.
 
 ## Provenance
 
-See `docs/public_sources.md` for the source map and `docs/ai_signal_hypotheses.md` for hypotheses and counterexamples. Full source-study packages live under `studies/`, including `panic-kavgic-2019-uctivost-neslaganje-slaganje` and `pavlovic-jovanovic-2026-pravni-jezik`.
+See `docs/public_sources.md` for the source map and `docs/ai_signal_hypotheses.md` for hypotheses and counterexamples. Full source-study packages live under `studies/`, including `panic-kavgic-2019-uctivost-neslaganje-slaganje`, `pavlovic-jovanovic-2026-pravni-jezik` and `tosovic-2002-funkcionalni-stilovi`.
