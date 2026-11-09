@@ -151,6 +151,35 @@ def _meta_sentences(paragraph: str) -> list[str]:
     return result
 
 
+INLINE_TICK_RUN_RE = re.compile(r"`+")
+HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|$)", re.S)
+
+
+def _mask_inline_code(line: str) -> str:
+    """Mask complete Markdown code spans bounded by equal-length backtick runs."""
+    runs = list(INLINE_TICK_RUN_RE.finditer(line))
+    chars = list(line)
+    i = 0
+    while i < len(runs):
+        close = i + 1
+        while close < len(runs) and len(runs[close].group()) != len(runs[i].group()):
+            close += 1
+        if close == len(runs):
+            i += 1
+            continue
+        start, end = runs[i].start(), runs[close].end()
+        chars[start:end] = " " * (end - start)
+        i = close + 1
+    return "".join(chars)
+
+
+def _mask_html_comments(text: str) -> str:
+    """Mask complete and unclosed HTML comments without losing line boundaries."""
+    return HTML_COMMENT_RE.sub(
+        lambda m: re.sub(r"[^\r\n]", " ", m.group(0)),
+        text,
+    )
+
 def _audited_prose_sentences(text: str) -> list[str]:
     """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
     result: list[str] = []
@@ -162,7 +191,7 @@ def _audited_prose_sentences(text: str) -> list[str]:
             result.extend(_meta_sentences(" ".join(paragraph)))
             paragraph.clear()
 
-    for line in text.splitlines():
+    for line in _mask_html_comments(text).splitlines():
         # Markdown fenced blocks: closing fence must match kind, be at least
         # as long as opening fence and contain no trailing information string.
         match = re.match(r"^\s{0,3}(?P<marker>" + r"`{3,}|~{3,}" + r")(?P<rest>.*)$", line)
@@ -195,7 +224,7 @@ def _audited_prose_sentences(text: str) -> list[str]:
             flush()
             continue
 
-        cleaned = re.sub(r"`[^`]*`", "", line)
+        cleaned = _mask_inline_code(line)
         cleaned = re.sub(r"https?://\S+", "", cleaned)
         if cleaned.strip():
             paragraph.append(cleaned.strip())
