@@ -39,6 +39,8 @@ NEGATIVE_PARALLELISM_RE = re.compile(
 )
 TRIPLET_RE = re.compile(
     r"\b([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\s*,\s*"
+    # Contrastive connectives are not the second item of a three-item list.
+    r"(?!već\b|nego\b|ali\b)"
     r"([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\s+"
     r"(?:i|ili)\s+"
     r"([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\b",
@@ -73,6 +75,301 @@ def _sentences(text: str) -> list[str]:
 
 def _words(text: str) -> list[str]:
     return WORD_RE.findall(text)
+
+
+
+# Experimental, document-level only: this is a soft stylistic signal.
+# Match sentence-initial editorial self-announcements, not ordinary transitions.
+METADISCOURSE_PATTERNS = (
+    re.compile(r"^u nastavku (?:ćemo|ću) (?:objasniti|razmotriti|pokazati|vid(?:e|je)ti)\b", re.I),
+    re.compile(r"^hajde da (?:vidimo|pogledamo|razmotrimo)\b", re.I),
+    re.compile(r"^kao što ćemo vid(?:e|je)ti\b", re.I),
+    re.compile(
+        r"^u (?:ovom|sledećem|sljedećem) (?:tekstu|odeljku|odjeljku|delu|dijelu) "
+        r"(?:(?:ćemo|ću) )?(?:objasniti|razmotriti|pokazati)\b",
+        re.I,
+    ),
+    re.compile(r"^evo (?:zašto|kako)\b", re.I),
+)
+
+
+# Sentence counts for the experimental signal exclude common abbreviations
+# and decimal points; the four default checks keep their historical parser.
+META_ABBREVIATIONS = frozenset({
+    "npr", "itd", "tj", "dr", "god", "g", "br", "str",
+    "prof", "doc", "mr", "ul", "sl", "tzv", "sv",
+})
+META_WORD_BEFORE_DOT = re.compile(r"([^\W\d_]+)$", re.UNICODE)
+META_END_MARKS = ".?!…"
+META_CLOSING_QUOTES = "»”\"')]}’"
+
+
+def _meta_sentences(paragraph: str) -> list[str]:
+    """Split a prose paragraph while guarding decimals, abbreviations and quotes."""
+    result: list[str] = []
+    start = 0
+    i = 0
+    while i < len(paragraph):
+        mark = paragraph[i]
+        if mark not in META_END_MARKS:
+            i += 1
+            continue
+        if mark == ".":
+            if i + 1 < len(paragraph) and paragraph[i + 1] == ".":
+                i += 1
+                continue
+            if (i and i + 1 < len(paragraph)
+                    and paragraph[i - 1].isdigit() and paragraph[i + 1].isdigit()):
+                i += 1
+                continue
+            token = META_WORD_BEFORE_DOT.search(paragraph[:i])
+            if token:
+                word = normalize_script(token.group(1)).casefold()
+                if word in META_ABBREVIATIONS:
+                    following = paragraph[i + 1:].lstrip()
+                    # "itd." can close a sentence, unlike an internal "npr.".
+                    if not (word == "itd" and following and following[0].isupper()):
+                        i += 1
+                        continue
+                following = paragraph[i + 1:].lstrip()
+                if len(token.group(1)) == 1 and token.group(1).isupper() and following and following[0].isupper():
+                    i += 1
+                    continue
+        j = i + 1
+        while j < len(paragraph) and paragraph[j] in META_END_MARKS:
+            j += 1
+        # Closing Markdown emphasis markers can follow sentence punctuation.
+        while j < len(paragraph) and paragraph[j] in META_CLOSING_QUOTES + "*_":
+            j += 1
+        if j < len(paragraph) and not paragraph[j].isspace():
+            i = j
+            continue
+        candidate = paragraph[start:j].strip()
+        if _words(candidate):
+            result.append(candidate)
+        start = j
+        i = j
+    tail = paragraph[start:].strip()
+    if _words(tail):
+        result.append(tail)
+    return result
+
+
+INLINE_TICK_RUN_RE = re.compile(r"`+")
+HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|$)", re.S)
+
+
+def _mask_code_and_comments(text: str) -> str:
+    """Mask code spans and HTML comments in source order, preserving newlines.
+
+    Delimiters in code spans cannot start HTML comments and backticks inside
+    comments cannot start code spans.
+    """
+    chars = list(text)
+    i = 0
+    while i < len(text):
+        if text.startswith("<!--", i):
+            close = text.find("-->", i + 4)
+            end = len(text) if close < 0 else close + 3
+        elif text[i] == "`":
+            opener = INLINE_TICK_RUN_RE.match(text, i)
+            assert opener is not None
+            width = len(opener.group())
+            closer = _code_span_closer(text, opener.end(), width)
+            if closer is None:
+                i = opener.end()
+                continue
+            end = closer.end()
+        else:
+            i += 1
+            continue
+        chars[i:end] = [
+            ch if ch in "\r\n" else " " for ch in text[i:end]
+        ]
+        i = end
+    return "".join(chars)
+
+def _mask_indented_code_blocks(text: str) -> str:
+    """Exclude indentation-based code at block boundaries before HTML comments."""
+    out: list[str] = []
+    paragraph_open = False
+    for raw in text.splitlines(keepends=True):
+        line = raw.rstrip("\r\n")
+        newline = raw[len(line):]
+        if not line.strip():
+            paragraph_open = False
+            out.append(raw)
+            continue
+        if not paragraph_open and (line.startswith("    ") or line.startswith("\t")):
+            out.append(" " * len(line) + newline)
+            continue
+        out.append(raw)
+        paragraph_open = not bool(re.match(
+            r"^\s{0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", line
+        ))
+    return "".join(out)
+
+
+FENCE_LINE_RE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<rest>.*)$")
+
+
+
+def _code_span_closer(text: str, start: int, width: int) -> re.Match[str] | None:
+    """Match code delimiters within a Markdown inline block, not across blocks."""
+    limit = len(text)
+    newline = text.find("\n", start)
+    while newline >= 0:
+        line_start = newline + 1
+        line_end = text.find("\n", line_start)
+        line = text[line_start:line_end if line_end >= 0 else len(text)].rstrip("\r")
+        fence_match = FENCE_LINE_RE.match(line)
+        fence_start = bool(
+            fence_match and (
+                fence_match.group("marker")[0] != chr(96)
+                or chr(96) not in fence_match.group("rest")
+            )
+        )
+        if (not line.strip()
+                or fence_start
+                or re.match(r"^ {0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", line)
+                or re.fullmatch(r" {0,3}(?:=+|-+)\s*", line)):
+            limit = line_start
+            break
+        newline = line_end
+    return next(
+        (run for run in INLINE_TICK_RUN_RE.finditer(text, start, limit)
+         if len(run.group()) == width),
+        None,
+    )
+
+def _mask_code_before_comments(text: str) -> str:
+    """Mask block code, then code spans and comments without crossing contexts."""
+    text = _mask_indented_code_blocks(text)
+    out: list[str] = []
+    fence: tuple[str, int] | None = None
+    in_comment = False
+    inline_width = 0
+    offset = 0
+
+    for raw in text.splitlines(keepends=True):
+        line = raw.rstrip("\r\n")
+        match = FENCE_LINE_RE.match(line)
+        parts = None
+        if match:
+            marker, rest = match.group("marker"), match.group("rest")
+            # Backtick fence info strings must not contain a backtick.
+            if marker[0] != "`" or "`" not in rest:
+                parts = (marker[0], len(marker), rest)
+
+        if fence is not None:
+            if parts and parts[0] == fence[0] and parts[1] >= fence[1] and not parts[2].strip():
+                fence = None
+            out.append("".join(ch if ch in "\r\n" else " " for ch in raw))
+            offset += len(raw)
+            continue
+
+        if not in_comment and not inline_width and parts:
+            fence = (parts[0], parts[1])
+            out.append("".join(ch if ch in "\r\n" else " " for ch in raw))
+            offset += len(raw)
+            continue
+
+        out.append(raw)
+        i = 0
+        while i < len(raw):
+            if in_comment:
+                close = raw.find("-->", i)
+                if close < 0:
+                    break
+                in_comment = False
+                i = close + 3
+            elif inline_width:
+                token = INLINE_TICK_RUN_RE.search(raw, i)
+                if token is None:
+                    break
+                if len(token.group()) == inline_width:
+                    inline_width = 0
+                i = token.end()
+            elif raw.startswith("<!--", i):
+                in_comment = True
+                i += 4
+            elif raw[i] == "`":
+                token = INLINE_TICK_RUN_RE.match(raw, i)
+                assert token is not None
+                width = len(token.group())
+                # A lone backtick is literal, not an open code span.
+                if _code_span_closer(text, offset + token.end(), width) is not None:
+                    inline_width = width
+                i = token.end()
+            else:
+                i += 1
+        offset += len(raw)
+
+    return _mask_code_and_comments("".join(out))
+
+def _audited_prose_sentences(text: str) -> list[str]:
+    """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
+    result: list[str] = []
+    paragraph: list[str] = []
+
+    def flush() -> None:
+        if paragraph:
+            result.extend(_meta_sentences(" ".join(paragraph)))
+            paragraph.clear()
+
+    for line in _mask_code_before_comments(text).splitlines():
+        stripped = line.lstrip()
+        # Setext underlines turn the previous lines into a heading.
+        if paragraph and re.fullmatch(r"(?:=+|-+)\s*", stripped):
+            paragraph.clear()
+            continue
+        # A Markdown thematic break is a structural separator, not a sentence.
+        if re.fullmatch(r"(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,}", stripped):
+            flush()
+            continue
+        # At a block boundary, four spaces or a tab denote indented code.
+        # In an existing paragraph, indentation may be soft-wrapped prose.
+        if not paragraph and (line.startswith("    ") or line.startswith("\t")):
+            continue
+        if not stripped or re.match(r"^(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", stripped):
+            flush()
+            continue
+
+        cleaned = re.sub(r"https?://\S+", "", line)
+        if cleaned.strip():
+            paragraph.append(cleaned.strip())
+        else:
+            flush()
+    flush()
+    return result
+
+
+def metadiscourse_density(text: str) -> Finding | None:
+    """Uncalibrated experimental density signal; not proof of AI authorship."""
+    sentences = _audited_prose_sentences(text)
+    if len(sentences) < 8:
+        return None
+    matches: list[str] = []
+    for original in sentences:
+        normalized = normalize_script(original).strip().lstrip("„“\"'«»*_")
+        if any(pattern.search(normalized) for pattern in METADISCOURSE_PATTERNS):
+            matches.append(_compact_ws(original))
+    # Require both repeated instances and a meaningful proportion of prose.
+    # ceil(N/6) is a provisional pilot gate, NOT a calibrated language norm.
+    threshold = max(3, (len(sentences) + 5) // 6)
+    if len(matches) < threshold:
+        return None
+    return Finding(
+        rule_id="sr_ai_metadiscourse_density",
+        category="AI_STYLE_SIGNAL",
+        severity="soft",
+        message=(
+            "Najave sopstvenog izlaganja ponavljaju se kroz tekst. "
+            "Proverite da li svaka vodi čitaoca; ne uklanjajte namerne ili korisne najave."
+        ),
+        count=len(matches),
+        evidence=matches[:5],
+    )
 
 
 def negative_parallelism_density(text: str) -> Finding | None:
@@ -161,13 +458,15 @@ def heading_fragmentation(text: str) -> Finding | None:
     )
 
 
-def review(text: str) -> list[Finding]:
+def review(text: str, *, experimental: bool = False) -> list[Finding]:
     checks = (
         negative_parallelism_density,
         triplet_density,
         repeated_section_scaffold,
         heading_fragmentation,
     )
+    if experimental:
+        checks += (metadiscourse_density,)
     return [finding for check in checks if (finding := check(text)) is not None]
 
 
@@ -175,10 +474,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Conservative Serbian humanizer checks")
     parser.add_argument("path", nargs="?", help="UTF-8 text/Markdown file; stdin if omitted")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--experimental", action="store_true",
+        help="Include uncalibrated experimental AI_STYLE_SIGNAL checks",
+    )
     args = parser.parse_args(argv)
 
     text = Path(args.path).read_text(encoding="utf-8") if args.path else sys.stdin.read()
-    findings = review(text)
+    findings = review(text, experimental=args.experimental)
 
     if args.json:
         print(json.dumps([asdict(f) for f in findings], ensure_ascii=False, indent=2))

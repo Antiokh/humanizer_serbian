@@ -18,6 +18,11 @@ The project is Serbian-only. The Russian humanizer is used as an architectural r
 - Public-source provenance map.
 - Separate architecture for modern norm, native usage, editing, English interference, Russian interference and AI-style diagnostics.
 
+### Experimental addition (November 2026)
+
+- A soft, opt-in metadiscourse-density signal is available with `--experimental` and is excluded from the default four checks. Its density threshold and dialect/Markdown guards have deterministic regression tests; it is **not corpus-calibrated** and is not a norm or authorship detector.
+- The JSONL seed evaluation corpus is executed in CI.
+
 ### Not yet operational
 
 - Serbian normative hard gates.

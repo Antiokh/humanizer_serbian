@@ -11,5 +11,8 @@
     "sr_ai_repeated_section_scaffold",
     "sr_ai_heading_fragmentation"
   ],
-  "notes": "Signals are diagnostics, never proof of AI authorship. Single ordinary constructions must remain clean."
+  "notes": "Signals are diagnostics, never proof of AI authorship. The experimental metadiscourse check is opt-in (--experimental), soft and uncalibrated; a single ordinary occurrence remains clean.",
+  "experimental_rules": [
+    "sr_ai_metadiscourse_density"
+  ]
 }
