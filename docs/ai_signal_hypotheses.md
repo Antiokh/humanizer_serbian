@@ -57,3 +57,9 @@ Both scripts are normal Serbian. Script choice is not an AI signal.
 ### Ekavian vs Ijekavian
 
 Both are legitimate standard variants and cannot be used as AI signals by themselves.
+
+## H7 — repeated explicit editorial self-announcements (experimental)
+
+Adapted from an analysis of [Hardik Pandya's *Stop Slop*](../studies/stop-slop/integration.md). This is **not** an instruction to delete all self-reference or rhetorical devices. The pilot `sr_ai_metadiscourse_density` detects only repeated sentence-initial writing-process announcements (at least three in eight or more prose sentences). Markdown code, blockquotes, headings and list items are excluded as obvious counterexample surfaces; Cyrillic/Latin output is preserved. Thresholds are provisional and uncalibrated.
+
+Counterexamples: academic roadmaps, classroom explanation, guided tutorials, intentional author refrain. The signal stays soft; human review determines function and genre.
