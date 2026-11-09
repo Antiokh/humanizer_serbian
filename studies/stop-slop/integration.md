@@ -61,3 +61,5 @@ The opt-in pilot is an `AI_STYLE_SIGNAL` inside the existing Serbian runtime; po
 - Markdown thematic breaks, Setext headings and indented code blocks at block boundaries do not count as prose sentences.
 - Seed JSONL tests reject unexpected positive findings, except for explicitly declared allowed_extra rule IDs for overlapping diagnostics.
 - These remain conservative heuristics and do not replace a linguistically validated sentence segmenter.
+
+- Tightened the existing triplet pattern to avoid treating contrastive conjunctions (već/nego/ali followed by i) as list items. The stricter seed evaluation exposed this operational false positive; a dedicated regression test now covers it.
