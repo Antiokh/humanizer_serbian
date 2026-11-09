@@ -30,7 +30,7 @@ One upstream before/after example deletes *most* from *most teams*, widening a q
 
 Only count conspicuous sentence-initial announcements of the writing process, not every `važno je`, `zato` or rhetorical question. Examples of candidate surface families: `U nastavku ćemo objasniti...`, `Hajde da pogledamo...`, `Kao što ćemo videti...`.
 
-A single natural occurrence is clean. The pilot requires **three instances in at least eight prose sentences**, excludes Markdown headings, list items, quotations marked as Markdown blockquotes and fenced code, and returns a **soft** candidate only. These numbers are conservative initial gates for a pilot, **not calibrated population thresholds**. The finding must not trigger an automatic edit or imply AI authorship. The original Cyrillic/Latin surface is preserved in the evidence.
+A single natural occurrence is clean. The pilot requires at least **eight prose sentences** and at least **`max(3, ceil(N/6))` instances**, where `N` is the number of prose sentences; it excludes Markdown headings, list items, Markdown blockquotes and fenced code, and returns a **soft** candidate only. It is disabled by default; run with `python scripts/check.py --experimental text.md` or `review(text, experimental=True)`. These numbers are conservative initial gates for a pilot, **not calibrated population thresholds**. The finding must not trigger an automatic edit or imply AI authorship. The original Cyrillic/Latin surface is preserved in the evidence.
 
 Counterexamples: course instructions (`U nastavku ćemo...` as a real navigation aid), academic metadiscourse, intentional recurring catchphrases, transcripts, scripts and lesson plans. These require contextual review even above the threshold.
 
@@ -45,4 +45,12 @@ Counterexamples: course instructions (`U nastavku ćemo...` as a real navigation
 
 ## Validation and next gate
 
-The pilot is an `AI_STYLE_SIGNAL` inside the existing Serbian runtime; positive, negative, boundary and script-preservation tests accompany it. This source has not undergone external corpus calibration. Measure false-positive cases across editorial, educational, political, technical and literary Serbian before tightening thresholds or promoting other source hypotheses. No numerical human-likeness score.
+The opt-in pilot is an `AI_STYLE_SIGNAL` inside the existing Serbian runtime; positive, negative, boundary and script-preservation tests accompany it. This source has not undergone external corpus calibration. Measure false-positive cases across editorial, educational, political, technical and literary Serbian before tightening thresholds or promoting other source hypotheses. No numerical human-likeness score.
+
+## Implementation notes after review
+
+- Do not extrapolate a local cluster from the global document density. The 1/6 gate is provisional and not corpus-validated; local-window analysis needs its own tests.
+- The parser preserves blank-line paragraph boundaries but treats soft-wrapped lines in the same paragraph as continuous prose.
+- Ekavian and Ijekavian forms (`videti`/`vidjeti`, `sledećem`/`sljedećem`) are accepted without rewriting the original script.
+- Markdown fences close only on the same marker type, with at least the opening length and no trailing info string.
+- JSONL evaluations are executed by a dedicated unittest rather than being merely stored examples.
