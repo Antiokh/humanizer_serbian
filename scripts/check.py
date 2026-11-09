@@ -180,33 +180,45 @@ def _mask_html_comments(text: str) -> str:
         text,
     )
 
+
+FENCE_LINE_RE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<rest>.*)$")
+
+
+def _mask_code_before_comments(text: str) -> str:
+    """Exclude Markdown code first, so comment-like text in code stays inert."""
+    out: list[str] = []
+    fence: tuple[str, int] | None = None
+    for raw in text.splitlines(keepends=True):
+        line = raw.rstrip("\r\n")
+        newline = raw[len(line):]
+        match = FENCE_LINE_RE.match(line)
+        if fence is not None:
+            if match:
+                marker, rest = match.group("marker"), match.group("rest")
+                if marker[0] == fence[0] and len(marker) >= fence[1] and not rest.strip():
+                    fence = None
+            out.append(" " * len(line) + newline)
+            continue
+        if match:
+            marker = match.group("marker")
+            fence = (marker[0], len(marker))
+            out.append(" " * len(line) + newline)
+            continue
+        out.append(_mask_inline_code(line) + newline)
+    return _mask_html_comments("".join(out))
+
+
 def _audited_prose_sentences(text: str) -> list[str]:
     """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
     result: list[str] = []
     paragraph: list[str] = []
-    fence: tuple[str, int] | None = None
 
     def flush() -> None:
         if paragraph:
             result.extend(_meta_sentences(" ".join(paragraph)))
             paragraph.clear()
 
-    for line in _mask_html_comments(text).splitlines():
-        # Markdown fenced blocks: closing fence must match kind, be at least
-        # as long as opening fence and contain no trailing information string.
-        match = re.match(r"^\s{0,3}(?P<marker>" + r"`{3,}|~{3,}" + r")(?P<rest>.*)$", line)
-        if fence is not None:
-            if match:
-                marker, rest = match.group("marker"), match.group("rest")
-                if marker[0] == fence[0] and len(marker) >= fence[1] and not rest.strip():
-                    fence = None
-            continue
-        if match:
-            flush()
-            marker = match.group("marker")
-            fence = (marker[0], len(marker))
-            continue
-
+    for line in _mask_code_before_comments(text).splitlines():
         stripped = line.lstrip()
         # Setext underlines turn the previous lines into a heading.
         if paragraph and re.fullmatch(r"(?:=+|-+)\s*", stripped):
@@ -224,8 +236,7 @@ def _audited_prose_sentences(text: str) -> list[str]:
             flush()
             continue
 
-        cleaned = _mask_inline_code(line)
-        cleaned = re.sub(r"https?://\S+", "", cleaned)
+        cleaned = re.sub(r"https?://\S+", "", line)
         if cleaned.strip():
             paragraph.append(cleaned.strip())
         else:
