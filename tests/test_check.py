@@ -253,6 +253,16 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
             + "Podaci su provereni. " * 8
         ))
 
+    def test_repeated_negative_contrast_is_not_a_triplet(self):
+        prose = (
+            "Sistem nije samo efikasan, već i pouzdan. "
+            "Proces nije samo brz, već i transparentan. "
+            "Rešenje nije samo moderno, već i održivo. "
+            "Promena nije samo tehnička, već i društvena."
+        )
+        self.assertIsNotNone(negative_parallelism_density(prose))
+        self.assertIsNone(triplet_density(prose))
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
