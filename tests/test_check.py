@@ -298,6 +298,36 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         )
         self.assertIsNone(metadiscourse_density(comment + "Podaci su provereni. " * 8))
         self.assertIsNone(metadiscourse_density(comment.replace("-->", "") + "Podaci su provereni. " * 8))
+    def test_multiline_inline_code_is_not_prose(self):
+        code = (
+            "\x60Napomena.\n"
+            "U nastavku ćemo objasniti problem.\n"
+            "Hajde da pogledamo rezultate.\n"
+            "Kao što ćemo videti, druga grupa kasni.\x60\n\n"
+        )
+        self.assertIsNone(metadiscourse_density(
+            code + "Podaci su provereni. " * 8
+        ))
+        nested = code.replace(
+            "\x60Napomena.", "\x60\x60Napomena \x60primer\x60."
+        ).replace(
+            "druga grupa kasni.\x60", "druga grupa kasni.\x60\x60"
+        )
+        self.assertIsNone(metadiscourse_density(
+            nested + "Podaci su provereni. " * 8
+        ))
+
+    def test_indented_code_comment_does_not_hide_following_prose(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        text = "    <!--\n\n" + previews + "Podaci su provereni. " * 5
+        finding = metadiscourse_density(text)
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding.count, 3)
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
