@@ -279,6 +279,15 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         )
         self.assertIsNone(metadiscourse_density(nested))
 
+    def test_comment_openers_inside_code_do_not_mask_following_prose(self):
+        prose = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+            + "Podaci su provereni. " * 5
+        )
+        self.assertEqual(metadiscourse_density("``<!--``\n\n" + prose).count, 3)
+        self.assertEqual(metadiscourse_density("```html\n<!--\n```\n\n" + prose).count, 3)
     def test_multiline_html_comments_do_not_count_as_prose(self):
         comment = (
             "<!--\n\n"
@@ -288,7 +297,7 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
             "-->\n\n"
         )
         self.assertIsNone(metadiscourse_density(comment + "Podaci su provereni. " * 8))
-        self.assertIsNone(metadiscourse_density(comment[:-4] + "Podaci su provereni. " * 8))
+        self.assertIsNone(metadiscourse_density(comment.replace("-->", "") + "Podaci su provereni. " * 8))
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
