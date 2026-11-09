@@ -75,6 +75,70 @@ def _words(text: str) -> list[str]:
     return WORD_RE.findall(text)
 
 
+
+# Experimental, document-level only: this is a soft stylistic signal.
+# Match sentence-initial editorial self-announcements, not ordinary transitions.
+METADISCOURSE_PATTERNS = (
+    re.compile(r"^u nastavku (?:ćemo|ću) (?:objasniti|razmotriti|pokazati|videti)\b", re.I),
+    re.compile(r"^hajde da (?:vidimo|pogledamo|razmotrimo)\b", re.I),
+    re.compile(r"^kao što ćemo videti\b", re.I),
+    re.compile(
+        r"^u (?:ovom|sledećem) (?:tekstu|odeljku|delu) "
+        r"(?:(?:ćemo|ću) )?(?:objasniti|razmotriti|pokazati)\b",
+        re.I,
+    ),
+    re.compile(r"^evo (?:zašto|kako)\b", re.I),
+)
+
+
+def _audited_prose_sentences(text: str) -> list[str]:
+    """Exclude obvious non-prose surfaces without changing displayed script."""
+    lines: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        match = re.match(r"^(\x60{3,}|~{3,})", stripped)
+        if match:
+            token = match.group(1)
+            if fence is None:
+                fence = token[0]
+            elif token[0] == fence:
+                fence = None
+            continue
+        if fence is not None or re.match(r"^(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", stripped):
+            continue
+        cleaned = re.sub(r"\x60[^\x60]*\x60", "", line)
+        cleaned = re.sub(r"https?://\S+", "", cleaned)
+        if cleaned.strip():
+            lines.append(cleaned.strip())
+    return _sentences(" ".join(lines))
+
+
+def metadiscourse_density(text: str) -> Finding | None:
+    """Soft prompt for review, never a request to remove all metadiscourse."""
+    sentences = _audited_prose_sentences(text)
+    if len(sentences) < 8:
+        return None
+    matches: list[str] = []
+    for original in sentences:
+        normalized = normalize_script(original).strip().lstrip("„“\"'«»")
+        if any(pattern.search(normalized) for pattern in METADISCOURSE_PATTERNS):
+            matches.append(_compact_ws(original))
+    if len(matches) < 3:
+        return None
+    return Finding(
+        rule_id="sr_ai_metadiscourse_density",
+        category="AI_STYLE_SIGNAL",
+        severity="soft",
+        message=(
+            "Najave sopstvenog izlaganja ponavljaju se kroz tekst. "
+            "Proverite da li svaka vodi čitaoca; ne uklanjajte namerne ili korisne najave."
+        ),
+        count=len(matches),
+        evidence=matches[:5],
+    )
+
+
 def negative_parallelism_density(text: str) -> Finding | None:
     normalized = normalize_script(text)
     matches = [_compact_ws(m.group(0)) for m in NEGATIVE_PARALLELISM_RE.finditer(normalized)]
@@ -167,6 +231,7 @@ def review(text: str) -> list[Finding]:
         triplet_density,
         repeated_section_scaffold,
         heading_fragmentation,
+        metadiscourse_density,
     )
     return [finding for check in checks if (finding := check(text)) is not None]
 
