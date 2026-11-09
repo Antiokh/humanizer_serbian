@@ -155,10 +155,10 @@ INLINE_TICK_RUN_RE = re.compile(r"`+")
 HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|$)", re.S)
 
 
-def _mask_inline_code(line: str) -> str:
-    """Mask complete Markdown code spans bounded by equal-length backtick runs."""
-    runs = list(INLINE_TICK_RUN_RE.finditer(line))
-    chars = list(line)
+def _mask_inline_code(text: str) -> str:
+    """Mask code spans across lines, bounded by equal-length backtick runs."""
+    runs = list(INLINE_TICK_RUN_RE.finditer(text))
+    chars = list(text)
     i = 0
     while i < len(runs):
         close = i + 1
@@ -168,9 +168,32 @@ def _mask_inline_code(line: str) -> str:
             i += 1
             continue
         start, end = runs[i].start(), runs[close].end()
-        chars[start:end] = " " * (end - start)
+        chars[start:end] = [
+            ch if ch in "\r\n" else " " for ch in text[start:end]
+        ]
         i = close + 1
     return "".join(chars)
+
+
+def _mask_indented_code_blocks(text: str) -> str:
+    """Exclude indentation-based code at block boundaries before HTML comments."""
+    out: list[str] = []
+    paragraph_open = False
+    for raw in text.splitlines(keepends=True):
+        line = raw.rstrip("\r\n")
+        newline = raw[len(line):]
+        if not line.strip():
+            paragraph_open = False
+            out.append(raw)
+            continue
+        if not paragraph_open and (line.startswith("    ") or line.startswith("\t")):
+            out.append(" " * len(line) + newline)
+            continue
+        out.append(raw)
+        paragraph_open = not bool(re.match(
+            r"^\s{0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", line
+        ))
+    return "".join(out)
 
 
 def _mask_html_comments(text: str) -> str:
@@ -204,8 +227,8 @@ def _mask_code_before_comments(text: str) -> str:
             fence = (marker[0], len(marker))
             out.append(" " * len(line) + newline)
             continue
-        out.append(_mask_inline_code(line) + newline)
-    return _mask_html_comments("".join(out))
+        out.append(raw)
+    return _mask_html_comments(_mask_inline_code(_mask_indented_code_blocks("".join(out))))
 
 
 def _audited_prose_sentences(text: str) -> list[str]:
