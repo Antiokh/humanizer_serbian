@@ -1,6 +1,7 @@
 import unittest
 
 from scripts.check import (
+    _audited_prose_sentences,
     heading_fragmentation,
     metadiscourse_density,
     negative_parallelism_density,
@@ -393,6 +394,8 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         found = metadiscourse_density(text)
         self.assertIsNotNone(found)
         self.assertEqual(found.count, 3)
+        self.assertTrue(all("skriveno" not in item for item in found.evidence))
+        self.assertTrue(any("pravi problem" in item for item in found.evidence))
 
     def test_unclosed_backtick_does_not_cross_paragraph_boundary(self):
         text = (
@@ -403,6 +406,10 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
             + "Podaci su provereni. " * 6
         )
         self.assertIsNone(metadiscourse_density(text))
+        sentences = _audited_prose_sentences(text)
+        self.assertEqual(len(sentences), 9)
+        self.assertTrue(sentences[0].startswith("U prvom pasusu"))
+        self.assertNotIn("objasniti kod", " ".join(sentences))
 
     def test_other_contrastive_connectives_are_not_triplets(self):
         for sentence in (
