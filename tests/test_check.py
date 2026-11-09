@@ -328,6 +328,54 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         self.assertIsNotNone(finding)
         self.assertEqual(finding.count, 3)
 
+    def test_comment_fence_does_not_hide_following_prose(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        text = "<!--\n```\n-->\n\n" + previews + "Podaci su provereni. " * 5
+        self.assertEqual(metadiscourse_density(text).count, 3)
+
+    def test_invalid_backtick_fence_info_is_inline_code(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        text = "```inline```\n\n" + previews + "Podaci su provereni. " * 5
+        self.assertEqual(metadiscourse_density(text).count, 3)
+
+    def test_backtick_in_comment_does_not_start_code(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        text = "<!-- ` -->\n\n" + previews + "Podaci su provereni. " * 5 + "\n\n`primer`"
+        self.assertEqual(metadiscourse_density(text).count, 3)
+
+    def test_sentence_final_itd_counts_as_ending(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        text = previews + "Primeri su spremni itd. Slede detalji. " + "Podaci su provereni. " * 3
+        self.assertEqual(metadiscourse_density(text).count, 3)
+
+    def test_markdown_emphasis_preserves_sentence_starts(self):
+        text = (
+            "**U nastavku ćemo objasniti problem.** "
+            "*Hajde da pogledamo rezultate.* "
+            "***Kao što ćemo videti, druga grupa kasni.*** "
+            + "Podaci su provereni. " * 5
+        )
+        found = metadiscourse_density(text)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.count, 3)
+        self.assertTrue(found.evidence[0].startswith("**U nastavku"))
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
