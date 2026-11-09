@@ -21,12 +21,15 @@ class SerbianAiStyleSeedEvals(unittest.TestCase):
             findings = review(case["text"], experimental=True)
             actual = {f.rule_id for f in findings}
             with self.subTest(case=case["id"]):
+                allowed_extra = set(case.get("allowed_extra", []))
                 self.assertTrue(
                     expected <= actual,
                     f"missing expected signal(s): {sorted(expected - actual)}",
                 )
-                if not expected:
-                    self.assertEqual(actual, set(), "negative control has false positives")
+                self.assertEqual(
+                    actual - expected - allowed_extra, set(),
+                    "unexpected extra finding(s) in seed evaluation",
+                )
         self.assertGreaterEqual(len(seen), 11)
 
 
