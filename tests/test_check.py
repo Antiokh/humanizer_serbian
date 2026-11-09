@@ -218,6 +218,41 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         )
         self.assertIsNone(metadiscourse_density(valid))
 
+    def test_meta_abbreviations_do_not_inflate_sentence_count(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        # Seven real sentences; npr. is not a sentence terminator.
+        seven = previews + "Primer je dat npr. ovde. " + "Podaci su provereni. " * 3
+        self.assertIsNone(metadiscourse_density(seven))
+        # The three previews remain 3/18, not 3/19 due to a decimal dot.
+        eighteen = previews + "Iznos je 3.14 dinara. " + "Podaci su provereni. " * 14
+        self.assertEqual(metadiscourse_density(eighteen).count, 3)
+
+    def test_thematic_breaks_indented_code_and_setext_are_excluded(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        # A thematic break does not make seven prose sentences into eight.
+        self.assertIsNone(metadiscourse_density(
+            previews + "Podaci su provereni. " * 4 + "\n\n---\n\n"
+        ))
+        code = (
+            "    U nastavku ćemo objasniti problem.\n"
+            "    Hajde da pogledamo rezultate.\n"
+            "    Kao što ćemo videti, druga grupa kasni.\n\n"
+            + "Podaci su provereni. " * 8
+        )
+        self.assertIsNone(metadiscourse_density(code))
+        self.assertIsNone(metadiscourse_density(
+            "U nastavku ćemo objasniti problem\n====\n\n"
+            + "Podaci su provereni. " * 8
+        ))
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
