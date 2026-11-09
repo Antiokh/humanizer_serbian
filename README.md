@@ -47,9 +47,12 @@ The initial executable pass contains conservative document-level diagnostics for
 
 These are `AI_STYLE_SIGNAL` findings, not `NORM` findings. A single occurrence is intentionally ignored.
 
+An additional experimental check for repeated editorial self-announcements is **off by default**. Enable it with `--experimental` after checking the document's genre. Its proportional threshold is a provisional research heuristic, not a language rule.
+
 ```bash
 python3 scripts/check.py text.md
 python3 scripts/check.py --json text.md
+python3 scripts/check.py --experimental --json text.md
 python3 -m unittest discover -s tests
 ```
 
