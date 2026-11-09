@@ -79,11 +79,11 @@ def _words(text: str) -> list[str]:
 # Experimental, document-level only: this is a soft stylistic signal.
 # Match sentence-initial editorial self-announcements, not ordinary transitions.
 METADISCOURSE_PATTERNS = (
-    re.compile(r"^u nastavku (?:ćemo|ću) (?:objasniti|razmotriti|pokazati|videti)\b", re.I),
+    re.compile(r"^u nastavku (?:ćemo|ću) (?:objasniti|razmotriti|pokazati|vid(?:e|je)ti)\b", re.I),
     re.compile(r"^hajde da (?:vidimo|pogledamo|razmotrimo)\b", re.I),
-    re.compile(r"^kao što ćemo videti\b", re.I),
+    re.compile(r"^kao što ćemo vid(?:e|je)ti\b", re.I),
     re.compile(
-        r"^u (?:ovom|sledećem) (?:tekstu|odeljku|delu) "
+        r"^u (?:ovom|sledećem|sljedećem) (?:tekstu|odeljku|odjeljku|delu|dijelu) "
         r"(?:(?:ćemo|ću) )?(?:objasniti|razmotriti|pokazati)\b",
         re.I,
     ),
@@ -92,30 +92,49 @@ METADISCOURSE_PATTERNS = (
 
 
 def _audited_prose_sentences(text: str) -> list[str]:
-    """Exclude obvious non-prose surfaces without changing displayed script."""
-    lines: list[str] = []
-    fence: str | None = None
+    """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
+    result: list[str] = []
+    paragraph: list[str] = []
+    fence: tuple[str, int] | None = None
+
+    def flush() -> None:
+        if paragraph:
+            result.extend(_sentences(" ".join(paragraph)))
+            paragraph.clear()
+
     for line in text.splitlines():
-        stripped = line.lstrip()
-        match = re.match(r"^(\x60{3,}|~{3,})", stripped)
+        # Markdown fenced blocks: closing fence must match kind, be at least
+        # as long as opening fence and contain no trailing information string.
+        match = re.match(r"^\s{0,3}(?P<marker>" + r"`{3,}|~{3,}" + r")(?P<rest>.*)$", line)
+        if fence is not None:
+            if match:
+                marker, rest = match.group("marker"), match.group("rest")
+                if marker[0] == fence[0] and len(marker) >= fence[1] and not rest.strip():
+                    fence = None
+            continue
         if match:
-            token = match.group(1)
-            if fence is None:
-                fence = token[0]
-            elif token[0] == fence:
-                fence = None
+            flush()
+            marker = match.group("marker")
+            fence = (marker[0], len(marker))
             continue
-        if fence is not None or re.match(r"^(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", stripped):
+
+        stripped = line.lstrip()
+        if not stripped or re.match(r"^(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", stripped):
+            flush()
             continue
-        cleaned = re.sub(r"\x60[^\x60]*\x60", "", line)
+
+        cleaned = re.sub(r"`[^`]*`", "", line)
         cleaned = re.sub(r"https?://\S+", "", cleaned)
         if cleaned.strip():
-            lines.append(cleaned.strip())
-    return _sentences(" ".join(lines))
+            paragraph.append(cleaned.strip())
+        else:
+            flush()
+    flush()
+    return result
 
 
 def metadiscourse_density(text: str) -> Finding | None:
-    """Soft prompt for review, never a request to remove all metadiscourse."""
+    """Uncalibrated experimental density signal; not proof of AI authorship."""
     sentences = _audited_prose_sentences(text)
     if len(sentences) < 8:
         return None
@@ -124,7 +143,10 @@ def metadiscourse_density(text: str) -> Finding | None:
         normalized = normalize_script(original).strip().lstrip("„“\"'«»")
         if any(pattern.search(normalized) for pattern in METADISCOURSE_PATTERNS):
             matches.append(_compact_ws(original))
-    if len(matches) < 3:
+    # Require both repeated instances and a meaningful proportion of prose.
+    # ceil(N/6) is a provisional pilot gate, NOT a calibrated language norm.
+    threshold = max(3, (len(sentences) + 5) // 6)
+    if len(matches) < threshold:
         return None
     return Finding(
         rule_id="sr_ai_metadiscourse_density",
@@ -225,14 +247,15 @@ def heading_fragmentation(text: str) -> Finding | None:
     )
 
 
-def review(text: str) -> list[Finding]:
+def review(text: str, *, experimental: bool = False) -> list[Finding]:
     checks = (
         negative_parallelism_density,
         triplet_density,
         repeated_section_scaffold,
         heading_fragmentation,
-        metadiscourse_density,
     )
+    if experimental:
+        checks += (metadiscourse_density,)
     return [finding for check in checks if (finding := check(text)) is not None]
 
 
@@ -240,10 +263,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Conservative Serbian humanizer checks")
     parser.add_argument("path", nargs="?", help="UTF-8 text/Markdown file; stdin if omitted")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--experimental", action="store_true",
+        help="Include uncalibrated experimental AI_STYLE_SIGNAL checks",
+    )
     args = parser.parse_args(argv)
 
     text = Path(args.path).read_text(encoding="utf-8") if args.path else sys.stdin.read()
-    findings = review(text)
+    findings = review(text, experimental=args.experimental)
 
     if args.json:
         print(json.dumps([asdict(f) for f in findings], ensure_ascii=False, indent=2))
