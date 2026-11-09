@@ -376,6 +376,43 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         self.assertEqual(found.count, 3)
         self.assertTrue(found.evidence[0].startswith("**U nastavku"))
 
+    def test_unclosed_backtick_does_not_consume_fenced_code_or_prose(self):
+        text = (
+            "Uvodni tekst sa jednim ` znakom.\n\n"
+            "```python\n"
+            "print(`x`)\n"
+            "U nastavku ćemo objasniti skriveno.\n"
+            "Hajde da pogledamo skriveno.\n"
+            "Kao što ćemo videti, ovo je skriveno.\n"
+            "```\n\n"
+            "U nastavku ćemo objasniti pravi problem. "
+            "Hajde da pogledamo stvarne rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+            + "Podaci su provereni. " * 5
+        )
+        found = metadiscourse_density(text)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.count, 3)
+
+    def test_unclosed_backtick_does_not_cross_paragraph_boundary(self):
+        text = (
+            "U prvom pasusu je usamljeni ` znak.\n\n"
+            "``U nastavku ćemo objasniti kod.``\n\n"
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+            + "Podaci su provereni. " * 6
+        )
+        self.assertIsNone(metadiscourse_density(text))
+
+    def test_other_contrastive_connectives_are_not_triplets(self):
+        for sentence in (
+            "Rešenje nije samo brzo, nego i pouzdano.",
+            "Rešenje je brzo, ali i pouzdano.",
+            "Решење није само брзо, него и поуздано.",
+            "Решење је брзо, али и поуздано.",
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertIsNone(triplet_density(" ".join([sentence] * 4)))
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
