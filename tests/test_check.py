@@ -136,6 +136,88 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         )
         self.assertIsNone(metadiscourse_density(prose))
 
+    def test_metadiscourse_is_opt_in(self):
+        text = (
+            "U nastavku ćemo objasniti problem. Podaci su provereni. "
+            "Hajde da pogledamo rezultate. Prvi uzorak ima osam odgovora. "
+            "Kao što ćemo videti, druga grupa kasni. Analiza je završena. "
+            "Izveštaj je objavljen. Svako može da ga pročita."
+        )
+        self.assertNotIn("sr_ai_metadiscourse_density", [f.rule_id for f in review(text)])
+        self.assertIn("sr_ai_metadiscourse_density",
+                      [f.rule_id for f in review(text, experimental=True)])
+
+    def test_metadiscourse_density_boundaries(self):
+        previews = (
+            "U nastavku ćemo objasniti problem. "
+            "Hajde da pogledamo rezultate. "
+            "Kao što ćemo videti, druga grupa kasni. "
+        )
+        filler = "Podaci su provereni. "
+        self.assertIsNone(metadiscourse_density(previews + filler * 4))  # 3/7
+        self.assertIsNotNone(metadiscourse_density(previews + filler * 5))  # 3/8
+        self.assertIsNone(metadiscourse_density(
+            "U nastavku ćemo objasniti problem. Hajde da pogledamo rezultate. " +
+            filler * 6
+        ))  # 2/8
+        self.assertIsNone(metadiscourse_density(previews + filler * 997))  # 3/1000
+        self.assertIsNotNone(metadiscourse_density(previews + filler * 15))  # 3/18
+        self.assertIsNone(metadiscourse_density(previews + filler * 16))  # 3/19
+
+    def test_ijekavian_meta_patterns(self):
+        ekavian = (
+            "U nastavku ćemo videti promene. "
+            "Kao što ćemo videti, stanje se popravlja. "
+            "U sledećem odeljku ćemo objasniti postupak. "
+        )
+        ijekavian = (
+            "U nastavku ćemo vidjeti promjene. "
+            "Kao što ćemo vidjeti, stanje se popravlja. "
+            "U sljedećem odjeljku ćemo objasniti postupak. "
+        )
+        filler = "Podaci su provereni. " * 5
+        self.assertEqual(metadiscourse_density(ekavian + filler).count, 3)
+        self.assertEqual(metadiscourse_density(ijekavian + filler).count, 3)
+        cyrillic = (
+            "У наставку ћемо видјети промјене. "
+            "Као што ћемо видјети, стање се поправља. "
+            "У сљедећем одјељку ћемо објаснити поступак. "
+        )
+        found = metadiscourse_density(cyrillic + "Подаци су проверени. " * 5)
+        self.assertEqual(found.count, 3)
+        self.assertTrue(found.evidence[0].startswith("У наставку"))
+
+    def test_multiline_paragraphs_preserve_sentence_starts(self):
+        prose = (
+            "U nastavku ćemo objasniti problem\n\n"
+            "Hajde da pogledamo rezultate.\n\n"
+            "Kao što ćemo videti, druga grupa kasni.\n\n"
+            + "Podaci su provereni.\n\n" * 5
+        )
+        self.assertEqual(metadiscourse_density(prose).count, 3)
+
+    def test_unequal_fences_remain_masked(self):
+        prose = (
+            "\x60\x60\x60\x60python\n"
+            "U nastavku ćemo objasniti a.\n"
+            "Hajde da pogledamo b.\n"
+            "\x60\x60\x60\n"
+            "Kao što ćemo videti, c.\n"
+            "\x60\x60\x60\x60\n" +
+            "Podaci su provereni. " * 8
+        )
+        self.assertIsNone(metadiscourse_density(prose))
+        valid = (
+            "~~~python\n"
+            "U nastavku ćemo objasniti a.\n"
+            "~~~ suffix\n"
+            "Hajde da pogledamo b.\n"
+            "~~~\n"
+            "Kao što ćemo videti, c.\n"
+            + "Podaci su provereni. " * 7
+        )
+        self.assertIsNone(metadiscourse_density(valid))
+
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
