@@ -39,6 +39,8 @@ NEGATIVE_PARALLELISM_RE = re.compile(
 )
 TRIPLET_RE = re.compile(
     r"\b([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\s*,\s*"
+    # Contrastive connectives are not the second item of a three-item list.
+    r"(?!već\b|nego\b|ali\b)"
     r"([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\s+"
     r"(?:i|ili)\s+"
     r"([\wčćžšđ]+(?:\s+[\wčćžšđ]+){0,2})\b",
