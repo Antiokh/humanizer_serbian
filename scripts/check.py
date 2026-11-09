@@ -175,11 +175,7 @@ def _mask_code_and_comments(text: str) -> str:
             opener = INLINE_TICK_RUN_RE.match(text, i)
             assert opener is not None
             width = len(opener.group())
-            closer = next(
-                (run for run in INLINE_TICK_RUN_RE.finditer(text, opener.end())
-                 if len(run.group()) == width),
-                None,
-            )
+            closer = _code_span_closer(text, opener.end(), width)
             if closer is None:
                 i = opener.end()
                 continue
@@ -216,6 +212,35 @@ def _mask_indented_code_blocks(text: str) -> str:
 
 FENCE_LINE_RE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<rest>.*)$")
 
+
+
+def _code_span_closer(text: str, start: int, width: int) -> re.Match[str] | None:
+    """Match code delimiters within a Markdown inline block, not across blocks."""
+    limit = len(text)
+    newline = text.find("\n", start)
+    while newline >= 0:
+        line_start = newline + 1
+        line_end = text.find("\n", line_start)
+        line = text[line_start:line_end if line_end >= 0 else len(text)].rstrip("\r")
+        fence_match = FENCE_LINE_RE.match(line)
+        fence_start = bool(
+            fence_match and (
+                fence_match.group("marker")[0] != chr(96)
+                or chr(96) not in fence_match.group("rest")
+            )
+        )
+        if (not line.strip()
+                or fence_start
+                or re.match(r"^ {0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", line)
+                or re.fullmatch(r" {0,3}(?:=+|-+)\s*", line)):
+            limit = line_start
+            break
+        newline = line_end
+    return next(
+        (run for run in INLINE_TICK_RUN_RE.finditer(text, start, limit)
+         if len(run.group()) == width),
+        None,
+    )
 
 def _mask_code_before_comments(text: str) -> str:
     """Mask block code, then code spans and comments without crossing contexts."""
@@ -273,8 +298,7 @@ def _mask_code_before_comments(text: str) -> str:
                 assert token is not None
                 width = len(token.group())
                 # A lone backtick is literal, not an open code span.
-                if any(len(run.group()) == width
-                       for run in INLINE_TICK_RUN_RE.finditer(text, offset + token.end())):
+                if _code_span_closer(text, offset + token.end(), width) is not None:
                     inline_width = width
                 i = token.end()
             else:
