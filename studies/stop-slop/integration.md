@@ -54,3 +54,10 @@ The opt-in pilot is an `AI_STYLE_SIGNAL` inside the existing Serbian runtime; po
 - Ekavian and Ijekavian forms (`videti`/`vidjeti`, `sledećem`/`sljedećem`) are accepted without rewriting the original script.
 - Markdown fences close only on the same marker type, with at least the opening length and no trailing info string.
 - JSONL evaluations are executed by a dedicated unittest rather than being merely stored examples.
+
+## Additional parser regression coverage
+
+- The experimental sentence denominator ignores common Serbian abbreviations (including npr.) and decimal points (for example, 3.14); the four existing operational checks retain their prior parser.
+- Markdown thematic breaks, Setext headings and indented code blocks at block boundaries do not count as prose sentences.
+- Seed JSONL tests reject unexpected positive findings, except for explicitly declared allowed_extra rule IDs for overlapping diagnostics.
+- These remain conservative heuristics and do not replace a linguistically validated sentence segmenter.
