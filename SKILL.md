@@ -58,6 +58,7 @@ Current seed signals:
 4. excessive micro-headings in continuous prose;
 5. generic metaphor chains and abstract “depth” language — model-only until calibrated;
 6. suspicious English conceptual calques — interference candidates, not AI findings by default.
+7. repeated explicit editorial self-announcements — experimental, soft, **off by default**; CLI `--experimental` only, with a provisional document-density gate. Not a general ban on metadiscourse.
 
 ## Required restraint
 
