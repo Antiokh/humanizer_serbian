@@ -126,8 +126,11 @@ def _meta_sentences(paragraph: str) -> list[str]:
             if token:
                 word = normalize_script(token.group(1)).casefold()
                 if word in META_ABBREVIATIONS:
-                    i += 1
-                    continue
+                    following = paragraph[i + 1:].lstrip()
+                    # "itd." can close a sentence, unlike an internal "npr.".
+                    if not (word == "itd" and following and following[0].isupper()):
+                        i += 1
+                        continue
                 following = paragraph[i + 1:].lstrip()
                 if len(token.group(1)) == 1 and token.group(1).isupper() and following and following[0].isupper():
                     i += 1
@@ -135,7 +138,8 @@ def _meta_sentences(paragraph: str) -> list[str]:
         j = i + 1
         while j < len(paragraph) and paragraph[j] in META_END_MARKS:
             j += 1
-        while j < len(paragraph) and paragraph[j] in META_CLOSING_QUOTES:
+        # Closing Markdown emphasis markers can follow sentence punctuation.
+        while j < len(paragraph) and paragraph[j] in META_CLOSING_QUOTES + "*_":
             j += 1
         if j < len(paragraph) and not paragraph[j].isspace():
             i = j
@@ -155,25 +159,39 @@ INLINE_TICK_RUN_RE = re.compile(r"`+")
 HTML_COMMENT_RE = re.compile(r"<!--.*?(?:-->|$)", re.S)
 
 
-def _mask_inline_code(text: str) -> str:
-    """Mask code spans across lines, bounded by equal-length backtick runs."""
-    runs = list(INLINE_TICK_RUN_RE.finditer(text))
+def _mask_code_and_comments(text: str) -> str:
+    """Mask code spans and HTML comments in source order, preserving newlines.
+
+    Delimiters in code spans cannot start HTML comments and backticks inside
+    comments cannot start code spans.
+    """
     chars = list(text)
     i = 0
-    while i < len(runs):
-        close = i + 1
-        while close < len(runs) and len(runs[close].group()) != len(runs[i].group()):
-            close += 1
-        if close == len(runs):
+    while i < len(text):
+        if text.startswith("<!--", i):
+            close = text.find("-->", i + 4)
+            end = len(text) if close < 0 else close + 3
+        elif text[i] == "`":
+            opener = INLINE_TICK_RUN_RE.match(text, i)
+            assert opener is not None
+            width = len(opener.group())
+            closer = next(
+                (run for run in INLINE_TICK_RUN_RE.finditer(text, opener.end())
+                 if len(run.group()) == width),
+                None,
+            )
+            if closer is None:
+                i = opener.end()
+                continue
+            end = closer.end()
+        else:
             i += 1
             continue
-        start, end = runs[i].start(), runs[close].end()
-        chars[start:end] = [
-            ch if ch in "\r\n" else " " for ch in text[start:end]
+        chars[i:end] = [
+            ch if ch in "\r\n" else " " for ch in text[i:end]
         ]
-        i = close + 1
+        i = end
     return "".join(chars)
-
 
 def _mask_indented_code_blocks(text: str) -> str:
     """Exclude indentation-based code at block boundaries before HTML comments."""
@@ -196,40 +214,74 @@ def _mask_indented_code_blocks(text: str) -> str:
     return "".join(out)
 
 
-def _mask_html_comments(text: str) -> str:
-    """Mask complete and unclosed HTML comments without losing line boundaries."""
-    return HTML_COMMENT_RE.sub(
-        lambda m: re.sub(r"[^\r\n]", " ", m.group(0)),
-        text,
-    )
-
-
 FENCE_LINE_RE = re.compile(r"^\s{0,3}(?P<marker>`{3,}|~{3,})(?P<rest>.*)$")
 
 
 def _mask_code_before_comments(text: str) -> str:
-    """Exclude Markdown code first, so comment-like text in code stays inert."""
+    """Mask block code, then code spans and comments without crossing contexts."""
+    text = _mask_indented_code_blocks(text)
     out: list[str] = []
     fence: tuple[str, int] | None = None
+    in_comment = False
+    inline_width = 0
+    offset = 0
+
     for raw in text.splitlines(keepends=True):
         line = raw.rstrip("\r\n")
-        newline = raw[len(line):]
         match = FENCE_LINE_RE.match(line)
-        if fence is not None:
-            if match:
-                marker, rest = match.group("marker"), match.group("rest")
-                if marker[0] == fence[0] and len(marker) >= fence[1] and not rest.strip():
-                    fence = None
-            out.append(" " * len(line) + newline)
-            continue
+        parts = None
         if match:
-            marker = match.group("marker")
-            fence = (marker[0], len(marker))
-            out.append(" " * len(line) + newline)
-            continue
-        out.append(raw)
-    return _mask_html_comments(_mask_inline_code(_mask_indented_code_blocks("".join(out))))
+            marker, rest = match.group("marker"), match.group("rest")
+            # Backtick fence info strings must not contain a backtick.
+            if marker[0] != "`" or "`" not in rest:
+                parts = (marker[0], len(marker), rest)
 
+        if fence is not None:
+            if parts and parts[0] == fence[0] and parts[1] >= fence[1] and not parts[2].strip():
+                fence = None
+            out.append("".join(ch if ch in "\r\n" else " " for ch in raw))
+            offset += len(raw)
+            continue
+
+        if not in_comment and not inline_width and parts:
+            fence = (parts[0], parts[1])
+            out.append("".join(ch if ch in "\r\n" else " " for ch in raw))
+            offset += len(raw)
+            continue
+
+        out.append(raw)
+        i = 0
+        while i < len(raw):
+            if in_comment:
+                close = raw.find("-->", i)
+                if close < 0:
+                    break
+                in_comment = False
+                i = close + 3
+            elif inline_width:
+                token = INLINE_TICK_RUN_RE.search(raw, i)
+                if token is None:
+                    break
+                if len(token.group()) == inline_width:
+                    inline_width = 0
+                i = token.end()
+            elif raw.startswith("<!--", i):
+                in_comment = True
+                i += 4
+            elif raw[i] == "`":
+                token = INLINE_TICK_RUN_RE.match(raw, i)
+                assert token is not None
+                width = len(token.group())
+                # A lone backtick is literal, not an open code span.
+                if any(len(run.group()) == width
+                       for run in INLINE_TICK_RUN_RE.finditer(text, offset + token.end())):
+                    inline_width = width
+                i = token.end()
+            else:
+                i += 1
+        offset += len(raw)
+
+    return _mask_code_and_comments("".join(out))
 
 def _audited_prose_sentences(text: str) -> list[str]:
     """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
@@ -275,7 +327,7 @@ def metadiscourse_density(text: str) -> Finding | None:
         return None
     matches: list[str] = []
     for original in sentences:
-        normalized = normalize_script(original).strip().lstrip("„“\"'«»")
+        normalized = normalize_script(original).strip().lstrip("„“\"'«»*_")
         if any(pattern.search(normalized) for pattern in METADISCOURSE_PATTERNS):
             matches.append(_compact_ws(original))
     # Require both repeated instances and a meaningful proportion of prose.
