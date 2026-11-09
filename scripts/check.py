@@ -91,6 +91,64 @@ METADISCOURSE_PATTERNS = (
 )
 
 
+# Sentence counts for the experimental signal exclude common abbreviations
+# and decimal points; the four default checks keep their historical parser.
+META_ABBREVIATIONS = frozenset({
+    "npr", "itd", "tj", "dr", "god", "g", "br", "str",
+    "prof", "doc", "mr", "ul", "sl", "tzv", "sv",
+})
+META_WORD_BEFORE_DOT = re.compile(r"([^\W\d_]+)$", re.UNICODE)
+META_END_MARKS = ".?!…"
+META_CLOSING_QUOTES = "»”\"')]}’"
+
+
+def _meta_sentences(paragraph: str) -> list[str]:
+    """Split a prose paragraph while guarding decimals, abbreviations and quotes."""
+    result: list[str] = []
+    start = 0
+    i = 0
+    while i < len(paragraph):
+        mark = paragraph[i]
+        if mark not in META_END_MARKS:
+            i += 1
+            continue
+        if mark == ".":
+            if i + 1 < len(paragraph) and paragraph[i + 1] == ".":
+                i += 1
+                continue
+            if (i and i + 1 < len(paragraph)
+                    and paragraph[i - 1].isdigit() and paragraph[i + 1].isdigit()):
+                i += 1
+                continue
+            token = META_WORD_BEFORE_DOT.search(paragraph[:i])
+            if token:
+                word = normalize_script(token.group(1)).casefold()
+                if word in META_ABBREVIATIONS:
+                    i += 1
+                    continue
+                following = paragraph[i + 1:].lstrip()
+                if len(token.group(1)) == 1 and token.group(1).isupper() and following and following[0].isupper():
+                    i += 1
+                    continue
+        j = i + 1
+        while j < len(paragraph) and paragraph[j] in META_END_MARKS:
+            j += 1
+        while j < len(paragraph) and paragraph[j] in META_CLOSING_QUOTES:
+            j += 1
+        if j < len(paragraph) and not paragraph[j].isspace():
+            i = j
+            continue
+        candidate = paragraph[start:j].strip()
+        if _words(candidate):
+            result.append(candidate)
+        start = j
+        i = j
+    tail = paragraph[start:].strip()
+    if _words(tail):
+        result.append(tail)
+    return result
+
+
 def _audited_prose_sentences(text: str) -> list[str]:
     """Ignore non-prose Markdown and preserve paragraph boundaries and script."""
     result: list[str] = []
@@ -99,7 +157,7 @@ def _audited_prose_sentences(text: str) -> list[str]:
 
     def flush() -> None:
         if paragraph:
-            result.extend(_sentences(" ".join(paragraph)))
+            result.extend(_meta_sentences(" ".join(paragraph)))
             paragraph.clear()
 
     for line in text.splitlines():
@@ -119,6 +177,18 @@ def _audited_prose_sentences(text: str) -> list[str]:
             continue
 
         stripped = line.lstrip()
+        # Setext underlines turn the previous lines into a heading.
+        if paragraph and re.fullmatch(r"(?:=+|-+)\s*", stripped):
+            paragraph.clear()
+            continue
+        # A Markdown thematic break is a structural separator, not a sentence.
+        if re.fullmatch(r"(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,}", stripped):
+            flush()
+            continue
+        # At a block boundary, four spaces or a tab denote indented code.
+        # In an existing paragraph, indentation may be soft-wrapped prose.
+        if not paragraph and (line.startswith("    ") or line.startswith("\t")):
+            continue
         if not stripped or re.match(r"^(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s)", stripped):
             flush()
             continue
