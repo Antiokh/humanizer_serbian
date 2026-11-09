@@ -263,6 +263,32 @@ Treća promena ima konkretan opis sa dovoljno proze da ovaj test ne zavisi od gu
         self.assertIsNotNone(negative_parallelism_density(prose))
         self.assertIsNone(triplet_density(prose))
 
+    def test_double_backtick_code_spans_do_not_count_as_prose(self):
+        text = (
+            "``U nastavku ćemo objasniti problem.``\n\n"
+            "``Hajde da pogledamo rezultate.``\n\n"
+            "``Kao što ćemo videti, druga grupa kasni.``\n\n"
+            + "Podaci su provereni. " * 8
+        )
+        self.assertIsNone(metadiscourse_density(text))
+        nested = (
+            "``U nastavku ćemo objasniti `problem`.``\n\n"
+            "``Hajde da pogledamo `rezultate`.``\n\n"
+            "``Kao što ćemo videti, `druga` grupa kasni.``\n\n"
+            + "Podaci su provereni. " * 8
+        )
+        self.assertIsNone(metadiscourse_density(nested))
+
+    def test_multiline_html_comments_do_not_count_as_prose(self):
+        comment = (
+            "<!--\n\n"
+            "U nastavku ćemo objasniti problem.\n\n"
+            "Hajde da pogledamo rezultate.\n\n"
+            "Kao što ćemo videti, druga grupa kasni.\n\n"
+            "-->\n\n"
+        )
+        self.assertIsNone(metadiscourse_density(comment + "Podaci su provereni. " * 8))
+        self.assertIsNone(metadiscourse_density(comment[:-4] + "Podaci su provereni. " * 8))
     def test_em_dash_is_not_a_rule(self):
         self.assertEqual(review("Pišem ovako — sa crtom — još od škole."), [])
 
